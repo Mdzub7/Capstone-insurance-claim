@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     AWS_REGION: str = "us-east-1"
     # These names must match your Terraform Outputs!
     DYNAMODB_TABLE: str = "insurance-claim-system-claims-dev" 
-    S3_BUCKET: str = "insurance-claim-system-docs-dev-12345" # Update this with your actual bucket name
+    S3_BUCKET: str = "intl-euro-capstone-team2" # Update this with your actual bucket name
 
     class Config:
         case_sensitive = True
