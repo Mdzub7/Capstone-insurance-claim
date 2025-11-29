@@ -24,7 +24,14 @@ async function login({ email, patient_id, password }) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, patient_id, password })
   });
-  if (!res.ok) throw new Error("Login failed");
+  if (!res.ok) {
+    try {
+      const body = await res.json();
+      throw new Error(body.detail || "Login failed");
+    } catch {
+      throw new Error("Login failed");
+    }
+  }
   return res.json();
 }
 

@@ -1,3 +1,4 @@
+import os
 import time
 import uuid
 from typing import Optional
@@ -58,7 +59,8 @@ class AuthService:
         - RegisterResponse with user_id and optional patient_id
         """
 
-        table = get_dynamodb_table()
+        dev_mode = os.environ.get("AUTH_DEV_MODE") == "1"
+        table = None if dev_mode else get_dynamodb_table()
         user_id = str(uuid.uuid4())
         patient_id: Optional[str] = None
         if req.role == "patient":
@@ -74,8 +76,10 @@ class AuthService:
             "patient_id": patient_id,
             "created_at": int(time.time())
         }
-
-        table.put_item(Item=item)
+        if dev_mode:
+            _DEV_USERS[item["user_id"]] = item
+        else:
+            table.put_item(Item=item)
         return RegisterResponse(user_id=user_id, patient_id=patient_id)
 
     def login(self, req: LoginRequest) -> LoginResponse:
@@ -88,23 +92,34 @@ class AuthService:
         - LoginResponse containing token, role, user_id, and optional patient_id
         """
 
-        table = get_dynamodb_table()
-        try:
-            if req.patient_id:
-                scan = table.scan(
-                    FilterExpression=boto3.dynamodb.conditions.Attr("patient_id").eq(req.patient_id),
-                    ProjectionExpression="claim_id, user_id, email, password_hash, role, patient_id"
-                )
-            else:
-                scan = table.scan(
-                    FilterExpression=boto3.dynamodb.conditions.Attr("email").eq(req.email),
-                    ProjectionExpression="claim_id, user_id, email, password_hash, role, patient_id"
-                )
-        except ClientError as e:
-            raise RuntimeError(f"Login failed: {e}")
+        dev_mode = os.environ.get("AUTH_DEV_MODE") == "1"
+        user = None
+        if dev_mode:
+            # Search dev store
+            for u in _DEV_USERS.values():
+                if (req.patient_id and u.get("patient_id") == req.patient_id) or (req.email and u.get("email") == req.email):
+                    user = u
+                    break
+        else:
+            table = get_dynamodb_table()
+            try:
+                if req.patient_id:
+                    scan = table.scan(
+                        FilterExpression=boto3.dynamodb.conditions.Attr("patient_id").eq(req.patient_id),
+                        ProjectionExpression="claim_id, user_id, email, password_hash, role, patient_id, name"
+                    )
+                else:
+                    scan = table.scan(
+                        FilterExpression=boto3.dynamodb.conditions.Attr("email").eq(req.email),
+                        ProjectionExpression="claim_id, user_id, email, password_hash, role, patient_id, name"
+                    )
+            except ClientError as e:
+                raise RuntimeError(f"Login failed: {e}")
+            items = scan.get("Items", [])
+            if items:
+                user = items[0]
 
-        items = scan.get("Items", [])
-        if not items:
+        if not user:
             # Seed default admin if email matches configured admin
             if req.email == settings.ADMIN_EMAIL:
                 user_id = str(uuid.uuid4())
@@ -118,12 +133,14 @@ class AuthService:
                     "name": "System Admin",
                     "created_at": int(time.time())
                 }
-                table.put_item(Item=item)
-                items = [item]
+                if dev_mode:
+                    _DEV_USERS[user_id] = item
+                else:
+                    table.put_item(Item=item)
+                user = item
             else:
                 raise ValueError("Invalid credentials")
 
-        user = items[0]
         if not self._verify_password(req.password, user.get("password_hash", "")):
             raise ValueError("Invalid credentials")
 
@@ -143,3 +160,7 @@ class AuthService:
             user_id=user["user_id"],
             patient_id=user.get("patient_id")
         )
+
+
+# Dev in-memory store
+_DEV_USERS: dict = {}
