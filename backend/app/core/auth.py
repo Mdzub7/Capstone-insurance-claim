@@ -1,3 +1,4 @@
+import os
 import boto3
 from botocore.exceptions import ClientError
 from functools import lru_cache
@@ -12,6 +13,10 @@ def get_jwt_secret() -> str:
     - Secret string used to sign/verify JWT tokens
     """
 
+    # Local dev fallback
+    dev = os.environ.get("JWT_DEV_SECRET")
+    if dev:
+        return dev
     client = boto3.client("secretsmanager", region_name=settings.AWS_REGION)
     try:
         resp = client.get_secret_value(SecretId=settings.JWT_SECRET_NAME)

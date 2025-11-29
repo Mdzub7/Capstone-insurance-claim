@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     S3_BUCKET: str = "intl-euro-capstone-team2" # Update this with your actual bucket name
     JWT_SECRET_NAME: str = "jwt_secret"
     JWT_ALGORITHM: str = "HS256"
+    ADMIN_EMAIL: str = "admin@healthcare.com"
+    ADMIN_PASSWORD: str = "SecureAdmin@123"
 
     class Config:
         case_sensitive = True

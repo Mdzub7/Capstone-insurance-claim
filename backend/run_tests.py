@@ -1,3 +1,5 @@
+import os
+os.environ["JWT_DEV_SECRET"] = "devsecret"
 from fastapi.testclient import TestClient
 from app.main import app
 

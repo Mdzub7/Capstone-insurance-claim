@@ -90,16 +90,38 @@ class AuthService:
 
         table = get_dynamodb_table()
         try:
-            scan = table.scan(
-                FilterExpression=boto3.dynamodb.conditions.Attr("email").eq(req.email),
-                ProjectionExpression="claim_id, user_id, email, password_hash, role, patient_id"
-            )
+            if req.patient_id:
+                scan = table.scan(
+                    FilterExpression=boto3.dynamodb.conditions.Attr("patient_id").eq(req.patient_id),
+                    ProjectionExpression="claim_id, user_id, email, password_hash, role, patient_id"
+                )
+            else:
+                scan = table.scan(
+                    FilterExpression=boto3.dynamodb.conditions.Attr("email").eq(req.email),
+                    ProjectionExpression="claim_id, user_id, email, password_hash, role, patient_id"
+                )
         except ClientError as e:
             raise RuntimeError(f"Login failed: {e}")
 
         items = scan.get("Items", [])
         if not items:
-            raise ValueError("Invalid credentials")
+            # Seed default admin if email matches configured admin
+            if req.email == settings.ADMIN_EMAIL:
+                user_id = str(uuid.uuid4())
+                item = {
+                    "claim_id": f"USER#{user_id}",
+                    "user_id": user_id,
+                    "email": settings.ADMIN_EMAIL,
+                    "password_hash": self._hash_password(settings.ADMIN_PASSWORD),
+                    "role": "admin",
+                    "patient_id": None,
+                    "name": "System Admin",
+                    "created_at": int(time.time())
+                }
+                table.put_item(Item=item)
+                items = [item]
+            else:
+                raise ValueError("Invalid credentials")
 
         user = items[0]
         if not self._verify_password(req.password, user.get("password_hash", "")):

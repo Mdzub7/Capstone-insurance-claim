@@ -10,7 +10,8 @@ class LoginRequest(BaseModel):
     - password: Plaintext password to be verified
     """
 
-    email: EmailStr
+    email: Optional[EmailStr] = None
+    patient_id: Optional[str] = None
     password: str = Field(min_length=8)
 
 
