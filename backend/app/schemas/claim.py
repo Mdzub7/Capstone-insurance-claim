@@ -4,7 +4,6 @@ from datetime import datetime
 
 # Base Schema: Shared properties
 class ClaimBase(BaseModel):
-    user_id: str
     amount: float
     description: str
     policy_number: str
@@ -20,6 +19,7 @@ class ClaimResponse(ClaimBase):
     claim_status: str
     created_at: str
     s3_upload_url: Optional[str] = None # Presigned URL
+    user_id: str
 
     class Config:
         from_attributes = True

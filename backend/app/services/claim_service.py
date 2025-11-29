@@ -7,14 +7,15 @@ from app.core.config import settings
 from app.schemas.claim import ClaimCreate, ClaimResponse
 
 class ClaimService:
-    def create_claim(self, claim_data: ClaimCreate) -> ClaimResponse:
+    def create_claim(self, claim_data: ClaimCreate, current_user: dict) -> ClaimResponse:
         claim_id = str(uuid.uuid4())
         timestamp = datetime.datetime.utcnow().isoformat()
         
         # 1. Prepare the Item for DynamoDB
         item = {
             "claim_id": claim_id,
-            "user_id": claim_data.user_id,
+            "user_id": current_user.get("sub"),
+            "patient_id": current_user.get("patient_id"),
             "claim_status": "PENDING",
             "amount": str(claim_data.amount), 
             "description": claim_data.description,
@@ -42,7 +43,10 @@ class ClaimService:
 
         # 4. Return the response object
         return ClaimResponse(
-            **claim_data.model_dump(),
+            user_id=item["user_id"],
+            amount=claim_data.amount,
+            description=claim_data.description,
+            policy_number=claim_data.policy_number,
             claim_id=claim_id,
             claim_status="PENDING",
             created_at=timestamp,
