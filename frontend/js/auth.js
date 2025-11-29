@@ -1,0 +1,87 @@
+const API_BASE = "http://localhost:8001/api/v1";
+
+function setAuth(token, role, patientId, remember) {
+  const storage = remember ? localStorage : sessionStorage;
+  storage.setItem("token", token);
+  storage.setItem("role", role);
+  if (patientId) storage.setItem("patient_id", patientId);
+}
+
+function getAuthToken() {
+  return sessionStorage.getItem("token") || localStorage.getItem("token");
+}
+
+function clearAuth() {
+  sessionStorage.clear();
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  localStorage.removeItem("patient_id");
+}
+
+async function login(email, password) {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+  if (!res.ok) throw new Error("Login failed");
+  return res.json();
+}
+
+async function register(payload) {
+  const res = await fetch(`${API_BASE}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error("Registration failed");
+  return res.json();
+}
+
+const loginForm = document.getElementById("loginForm");
+const registerLink = document.getElementById("registerLink");
+
+if (loginForm) {
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("loginMessage");
+    msg.textContent = "Authenticating...";
+    msg.style.color = "#0070cd";
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const remember = document.getElementById("remember").checked;
+  try {
+      const data = await login(email, password);
+      setAuth(data.token, data.role, data.patient_id || data.user_id, remember);
+      msg.textContent = "Login successful";
+      msg.style.color = "green";
+      const target = data.role === "admin" ? "dashboard.html?role=admin" : "dashboard.html?role=patient";
+      window.location.href = target;
+    } catch (err) {
+      msg.textContent = "Error: " + err.message;
+      msg.style.color = "red";
+    }
+  });
+}
+
+if (registerLink) {
+  registerLink.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const email = prompt("Enter email");
+    const password = prompt("Enter a strong password (min 8 chars)");
+    const role = prompt("Enter role: patient or admin", "patient");
+    const name = prompt("Enter full name");
+    if (!email || !password || !role) return;
+    const msg = document.getElementById("loginMessage");
+    try {
+      const data = await register({ email, password, role, name });
+      msg.textContent = `Registered. Your patient_id: ${data.patient_id || "n/a"}`;
+      msg.style.color = "green";
+    } catch (err) {
+      msg.textContent = "Registration failed";
+      msg.style.color = "red";
+    }
+  });
+}
+
+export { getAuthToken, clearAuth };

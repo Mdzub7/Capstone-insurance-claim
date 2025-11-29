@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login • Cigna Claims</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="card" role="form" aria-labelledby="loginTitle">
+      <h1 id="loginTitle">Portal Access</h1>
+      <p>Enter your credentials to access your portal.</p>
+      <form id="loginForm" autocomplete="off" novalidate>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input id="email" type="email" required aria-required="true" />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input id="password" type="password" required aria-required="true" minlength="8" />
+        </div>
+        <div class="form-group">
+          <label for="remember"><input id="remember" type="checkbox" /> Remember me</label>
+        </div>
+        <button type="submit">Login</button>
+        <div id="loginMessage" style="margin-top:20px; font-weight:bold;"></div>
+      </form>
+      <p style="margin-top:16px;">New user? <a href="#" id="registerLink">Register</a></p>
+    </div>
+  </div>
+  <script src="js/auth.js"></script>
+</body>
+</html>

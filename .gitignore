@@ -45,6 +45,8 @@ crash.*.log
 *.tfvars
 *.tfvars.json
 
+.trae/
+
 LICENSE.txt
 
 terraform
