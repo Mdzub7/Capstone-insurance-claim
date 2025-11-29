@@ -27,6 +27,12 @@ resource "aws_dynamodb_table" "claims_table" {
   }
 }
 
+variable "existing_s3_bucket_name" {
+  description = "The name of the pre-existing S3 bucket provided by Cigna"
+  type        = string
+  default = "intl-euro-capstone-team2" #<--- Optional: set a default
+}
+
 # --- S3 BUCKET FOR DOCUMENTS ---
 #resource "aws_s3_bucket" "claims_docs" {
 #  bucket = "${var.project_name}-caps-${var.environment}" # Must be globally unique
@@ -107,7 +113,7 @@ resource "aws_iam_policy" "lambda_policy" {
         # Allow Reading from S3 Bucket
         Action   = ["s3:GetObject"]
         Effect   = "Allow"
-        Resource = "${aws_s3_bucket.claims_docs.arn}/*"
+        Resource = "arn:aws:s3:::${var.existing_s3_bucket_name}/*"
       },
       {
         # Allow Sending messages to SQS
@@ -156,12 +162,12 @@ resource "aws_lambda_permission" "allow_s3" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.processor.function_name
   principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.claims_docs.arn
+  source_arn    = "arn:aws:s3:::${var.existing_s3_bucket_name}"
 }
 
 # 2. Set the trigger on the Bucket
 resource "aws_s3_bucket_notification" "bucket_notification" {
-  bucket = aws_s3_bucket.claims_docs.id
+  bucket = var.existing_s3_bucket_name
 
   lambda_function {
     lambda_function_arn = aws_lambda_function.processor.arn
