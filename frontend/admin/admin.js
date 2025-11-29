@@ -35,9 +35,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (usersDiv) {
     try {
       const users = await fetchUsers();
-      let html = "<table style='width:100%'><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Patient ID</th></tr></thead><tbody>";
+      let html = "<table style='width:100%'><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Patient ID</th><th>Action</th></tr></thead><tbody>";
       users.forEach(u => {
-        html += `<tr><td>${u.name || ''}</td><td>${u.email || ''}</td><td>${u.role}</td><td>${u.patient_id || ''}</td></tr>`;
+        html += `<tr><td>${u.name || ''}</td><td>${u.email || ''}</td><td>${u.role}</td><td>${u.patient_id || ''}</td><td><button class='delete-user' data-id='${u.user_id}'>Delete</button></td></tr>`;
       });
       html += "</tbody></table>";
       usersDiv.innerHTML = html;
@@ -60,6 +60,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       claimsDiv.innerHTML = html;
       claimsDiv.addEventListener("click", async (e) => {
         const t = e.target;
+        if (t.classList.contains("delete-user")) {
+          const id = t.dataset.id;
+          await fetch(`${API_BASE}/admin/users/${id}`, { method: 'DELETE', headers: authHeader() });
+          t.closest('tr').remove();
+        }
         if (t.classList.contains("approve")) {
           await approveClaim(t.dataset.id);
           t.closest("tr").querySelector("td:nth-child(4)").textContent = "APPROVED";

@@ -41,6 +41,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   const claimsList = document.getElementById("claimsList");
   const submitForm = document.getElementById("submitForm");
   const uploadMsg = document.getElementById("uploadMsg");
+  const stats = document.getElementById("stats");
 
   if (profileCard) {
     try {
@@ -74,6 +75,19 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
     } catch (e) {
       claimsList.textContent = "Failed to load claims";
+    }
+  }
+
+  if (stats) {
+    try {
+      const claims = await fetchMyClaims();
+      const total = claims.length;
+      const pending = claims.filter(c => c.claim_status === 'PENDING').length;
+      const approved = claims.filter(c => c.claim_status === 'APPROVED').length;
+      const rejected = claims.filter(c => c.claim_status === 'REJECTED').length;
+      stats.innerHTML = `<p><strong>Total:</strong> ${total} | <span class='badge badge-PENDING'>Pending ${pending}</span> <span class='badge badge-APPROVED'>Approved ${approved}</span> <span class='badge badge-REJECTED'>Rejected ${rejected}</span></p>`;
+    } catch (e) {
+      stats.textContent = 'Failed to load stats';
     }
   }
 

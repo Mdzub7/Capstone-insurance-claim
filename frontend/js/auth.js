@@ -18,11 +18,11 @@ function clearAuth() {
   localStorage.removeItem("patient_id");
 }
 
-async function login(email, password) {
+async function login({ email, patient_id, password }) {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ email, patient_id, password })
   });
   if (!res.ok) throw new Error("Login failed");
   return res.json();
@@ -47,15 +47,17 @@ if (loginForm) {
     const msg = document.getElementById("loginMessage");
     msg.textContent = "Authenticating...";
     msg.style.color = "#0070cd";
+    const method = document.getElementById("loginMethod").value;
     const email = document.getElementById("email").value.trim();
+    const patient_id = document.getElementById("patientId").value.trim();
     const password = document.getElementById("password").value;
     const remember = document.getElementById("remember").checked;
-  try {
-      const data = await login(email, password);
+    try {
+      const data = await login({ email: method === 'email' ? email : null, patient_id: method === 'patient' ? patient_id : null, password });
       setAuth(data.token, data.role, data.patient_id || data.user_id, remember);
       msg.textContent = "Login successful";
       msg.style.color = "green";
-      const target = data.role === "admin" ? "dashboard.html?role=admin" : "dashboard.html?role=patient";
+      const target = data.role === "admin" ? "admin/dashboard.html" : "patient/dashboard.html";
       window.location.href = target;
     } catch (err) {
       msg.textContent = "Error: " + err.message;
@@ -83,5 +85,3 @@ if (registerLink) {
     }
   });
 }
-
-export { getAuthToken, clearAuth };
