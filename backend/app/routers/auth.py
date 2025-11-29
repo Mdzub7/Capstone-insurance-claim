@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
+from botocore.exceptions import ClientError
 from app.schemas.auth import LoginRequest, LoginResponse, RegisterRequest, RegisterResponse
 from app.services.auth_service import AuthService
 
@@ -24,6 +25,8 @@ def login(req: LoginRequest, service: AuthService = Depends(get_auth_service)) -
         return service.login(req)
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
+    except ClientError as e:
+        raise HTTPException(status_code=503, detail="AWS service error")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -34,5 +37,7 @@ def register(req: RegisterRequest, service: AuthService = Depends(get_auth_servi
 
     try:
         return service.register(req)
+    except ClientError:
+        raise HTTPException(status_code=503, detail="AWS service error")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
