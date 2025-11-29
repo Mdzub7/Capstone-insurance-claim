@@ -1,5 +1,6 @@
 import uuid
 import datetime
+import boto3  # <--- THIS WAS MISSING
 from botocore.exceptions import ClientError
 from app.core.database import get_dynamodb_table, get_s3_client
 from app.core.config import settings
@@ -15,7 +16,7 @@ class ClaimService:
             "claim_id": claim_id,
             "user_id": claim_data.user_id,
             "claim_status": "PENDING",
-            "amount": str(claim_data.amount), # DynamoDB handles Decimals better as strings/decimals
+            "amount": str(claim_data.amount), 
             "description": claim_data.description,
             "policy_number": claim_data.policy_number,
             "created_at": timestamp
@@ -25,7 +26,7 @@ class ClaimService:
         table = get_dynamodb_table()
         table.put_item(Item=item)
 
-        # 3. Generate S3 Presigned URL (For secure file upload)
+        # 3. Generate S3 Presigned URL
         s3_client = get_s3_client()
         object_key = f"claims/{claim_id}/document.pdf"
         
@@ -50,7 +51,7 @@ class ClaimService:
 
     def get_claims_by_user(self, user_id: str):
         table = get_dynamodb_table()
-        # Query the GSI (Global Secondary Index) we created in Terraform
+        # Query the GSI (Global Secondary Index)
         response = table.query(
             IndexName="UserIndex",
             KeyConditionExpression=boto3.dynamodb.conditions.Key('user_id').eq(user_id)
