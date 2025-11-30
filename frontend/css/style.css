@@ -229,3 +229,58 @@ button:hover { background-color: #0926fe; }
 .header-actions { display: flex; gap: var(--space-3); }
 .cta-register { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.8); padding: 8px 14px; border-radius: var(--radius-sm); text-decoration: none; font-weight: var(--font-weight-bold); }
 .cta-register:hover { background: rgba(255,255,255,0.12); }
+
+/* Patient shell */
+.patient-shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { background: #0926fe; color:#fff; border-right: none; padding: var(--space-6) var(--space-5); display:flex; flex-direction:column; justify-content:space-between; }
+.sidebar-header { display: grid; grid-template-columns: 48px 1fr; gap: var(--space-3); align-items: center; margin-bottom: var(--space-6); }
+.sidebar-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; box-shadow: var(--shadow-sm); border:2px solid rgba(255,255,255,0.6); }
+.sidebar-name { font-weight: var(--font-weight-bold); color: #fff; }
+.sidebar-id { color: #cfe7ff; font-size: 13px; }
+.sidebar-nav { display: grid; gap: 6px; }
+.sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: #fff; text-decoration: none; border-radius: var(--radius-sm); }
+.sidebar-link:hover { background: rgba(255,255,255,0.12); }
+.sidebar-link.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: var(--font-weight-bold); }
+.sidebar-icon { width:20px; height:20px; filter: invert(1); }
+.sidebar-bottom-logo { width: 96px; opacity: 0.9; }
+.sidebar-top { display:flex; justify-content:flex-end; margin-bottom: var(--space-3); }
+.sidebar-toggle { background: rgba(255,255,255,0.2); color:#fff; border: none; border-radius: var(--radius-sm); padding: 6px 10px; cursor: pointer; }
+.sidebar-toggle:hover { background: rgba(255,255,255,0.3); }
+.sidebar.collapsed { width: 72px; }
+.sidebar.collapsed .sidebar-header > div { display:none; }
+.sidebar.collapsed .sidebar-link span { display:none; }
+.sidebar.collapsed .sidebar-bottom-logo { width:48px; }
+.sidebar.collapsed .sidebar-nav { gap: 12px; }
+.content { background: rgba(9,38,254,0.06); padding: var(--space-6); }
+.content .card { margin-bottom: var(--space-6); }
+
+.page-brand { float:right; height:28px; opacity:0.9; }
+
+/* Dashboard components */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--space-5); }
+.stat-card { background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: var(--space-5); }
+.stat-title { color: #6b7d8a; font-size: 13px; }
+.stat-value { font-size: 28px; font-weight: var(--font-weight-bold); color: var(--cigna-dark); }
+.charts-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--space-5); }
+.table-card { background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-md); }
+.table-card table { width: 100%; border-collapse: collapse; }
+.table-card th, .table-card td { padding: 12px 16px; border-bottom: 1px solid #eef1f5; text-align: left; }
+.table-card thead th { background: #f4f6f8; font-weight: var(--font-weight-bold); }
+.filters { display: flex; gap: var(--space-3); align-items: center; margin-bottom: var(--space-3); }
+
+/* Lifecycle stepper */
+.steps { display:flex; align-items:center; gap:12px; }
+.step-dot { width:12px; height:12px; border-radius:50%; background:#c7d7e6; }
+.step-dot.active { background:#0926fe; }
+.step-line { flex:1; height:2px; background:#c7d7e6; }
+.step-line.active { background:#0926fe; }
+
+@media (max-width: 1024px) {
+  .patient-shell { grid-template-columns: 220px 1fr; }
+  .stats-grid { grid-template-columns: repeat(2,1fr); }
+  .charts-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .patient-shell { grid-template-columns: 1fr; }
+  .sidebar { position: sticky; top: 0; z-index: 100; }
+}

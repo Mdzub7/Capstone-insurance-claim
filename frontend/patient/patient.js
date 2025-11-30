@@ -42,6 +42,15 @@ window.addEventListener("DOMContentLoaded", async () => {
   const submitForm = document.getElementById("submitForm");
   const uploadMsg = document.getElementById("uploadMsg");
   const stats = document.getElementById("stats");
+  const statsGrid = document.getElementById("statsGrid");
+  const yearSelect = document.getElementById("yearSelect");
+  const chartMonthly = document.getElementById("chartMonthly");
+  const chartStatus = document.getElementById("chartStatus");
+  const recentTable = document.getElementById("recentTable");
+  const profileStats = document.getElementById("profileStats");
+  const statusFilter = document.getElementById("statusFilter");
+  const yearFilter = document.getElementById("yearFilter");
+  const lifecycleList = document.getElementById('lifecycleList');
 
   if (profileCard) {
     try {
@@ -110,5 +119,117 @@ window.addEventListener("DOMContentLoaded", async () => {
         uploadMsg.style.color = "red";
       }
     });
+  }
+
+  async function loadDashboard() {
+    const claims = await fetchMyClaims();
+    const years = Array.from(new Set(claims.map(c => new Date(c.created_at).getFullYear()))).sort();
+    const currentYear = new Date().getFullYear();
+    if (yearSelect) {
+      yearSelect.innerHTML = years.map(y => `<option ${y===currentYear?'selected':''}>${y}</option>`).join('');
+    }
+    const year = yearSelect ? parseInt(yearSelect.value || currentYear) : currentYear;
+    const byMonth = Array(12).fill(0);
+    const amtByMonth = Array(12).fill(0);
+    let pending=0, approved=0, rejected=0, totalAmt=0;
+    claims.forEach(c => {
+      const d = new Date(c.created_at);
+      if (d.getFullYear() === year) {
+        byMonth[d.getMonth()]++;
+        amtByMonth[d.getMonth()] += Number(c.amount||0);
+      }
+      totalAmt += Number(c.amount||0);
+      if (c.claim_status==='PENDING') pending++;
+      if (c.claim_status==='APPROVED') approved++;
+      if (c.claim_status==='REJECTED') rejected++;
+    });
+    if (statsGrid) {
+      statsGrid.innerHTML = `
+        <div class='stat-card'><div class='stat-title'>Total Claims</div><div class='stat-value'>${claims.length}</div></div>
+        <div class='stat-card'><div class='stat-title'>Approved</div><div class='stat-value'>${approved}</div></div>
+        <div class='stat-card'><div class='stat-title'>Rejected</div><div class='stat-value'>${rejected}</div></div>
+        <div class='stat-card'><div class='stat-title'>Total Amount</div><div class='stat-value'>$${totalAmt.toFixed(2)}</div></div>`;
+    }
+    if (chartMonthly && window.Chart) {
+      new Chart(chartMonthly, { type:'bar', data:{ labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets:[{ label:'Claims', data:byMonth, backgroundColor:'#0926fe' }, { label:'Amount ($)', data:amtByMonth, type:'line', borderColor:'#00a6a6', yAxisID:'y1' }] }, options:{ responsive:true, scales:{ y:{ beginAtZero:true }, y1:{ beginAtZero:true, position:'right' } } } });
+    }
+    if (chartStatus && window.Chart) {
+      new Chart(chartStatus, { type:'doughnut', data:{ labels:['Pending','Approved','Rejected'], datasets:[{ data:[pending,approved,rejected], backgroundColor:['#ffeeba','#d4edda','#f8d7da'] }] }, options:{ responsive:true } });
+    }
+    if (recentTable) {
+      const r = claims.slice().sort((a,b)=> new Date(b.created_at)-new Date(a.created_at)).slice(0,10);
+      recentTable.innerHTML = r.map(c=>`<tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description}</td><td>$${Number(c.amount).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td></tr>`).join('');
+    }
+  }
+
+  async function loadProfileKPIs() {
+    try {
+      const claims = await fetchMyClaims();
+      const totalAmt = claims.reduce((s,c)=>s+Number(c.amount||0),0);
+      const pending = claims.filter(c=>c.claim_status==='PENDING').length;
+      if (profileStats) {
+        profileStats.innerHTML = `
+          <div class='stat-card'><div class='stat-title'>Claims so far</div><div class='stat-value'>${claims.length}</div></div>
+          <div class='stat-card'><div class='stat-title'>Total amount</div><div class='stat-value'>$${totalAmt.toFixed(2)}</div></div>
+          <div class='stat-card'><div class='stat-title'>Pending</div><div class='stat-value'>${pending}</div></div>`;
+      }
+    } catch {}
+  }
+
+  async function loadHistory() {
+    const claims = await fetchMyClaims();
+    const years = Array.from(new Set(claims.map(c => new Date(c.created_at).getFullYear()))).sort();
+    if (yearFilter) yearFilter.innerHTML = years.map(y=>`<option>${y}</option>`).join('');
+    function render() {
+      const status = statusFilter ? statusFilter.value : 'all';
+      const year = yearFilter ? parseInt(yearFilter.value) : new Date().getFullYear();
+      const filtered = claims.filter(c => (status==='all' || c.claim_status===status) && new Date(c.created_at).getFullYear()===year);
+      const tbody = document.getElementById('claimsTable');
+      if (tbody) tbody.innerHTML = filtered.map(c=>`<tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description}</td><td>$${Number(c.amount).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td></tr>`).join('');
+      const ctx = document.getElementById('historyTimeline');
+      if (ctx && window.Chart) {
+        const byMonth = Array(12).fill(0);
+        filtered.forEach(c=>{ const d=new Date(c.created_at); byMonth[d.getMonth()]++; });
+        new Chart(ctx, { type:'line', data:{ labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets:[{ label:'Claims', data:byMonth, borderColor:'#0926fe' }] }, options:{ responsive:true } });
+      }
+    }
+    if (statusFilter) statusFilter.addEventListener('change', render);
+    if (yearFilter) yearFilter.addEventListener('change', render);
+    render();
+  }
+
+  if (statsGrid || chartMonthly || chartStatus || recentTable) {
+    try { await loadDashboard(); } catch {}
+    if (yearSelect) yearSelect.addEventListener('change', loadDashboard);
+  }
+  if (profileStats) { await loadProfileKPIs(); }
+  if (document.getElementById('claimsTable')) { await loadHistory(); }
+  if (lifecycleList) {
+    try {
+      const claims = await fetchMyClaims();
+      lifecycleList.innerHTML = claims.map(c=>{
+        const status = c.claim_status;
+        const s1 = 'step-dot active';
+        const l1 = 'step-line active';
+        const s2 = status==='PENDING'||status==='APPROVED'||status==='REJECTED' ? 'step-dot active':'step-dot';
+        const l2 = status==='APPROVED'||status==='REJECTED' ? 'step-line active':'step-line';
+        const s3 = status==='APPROVED'||status==='REJECTED' ? 'step-dot active':'step-dot';
+        return `
+          <div class='card' style='margin-bottom:16px;'>
+            <div style='display:flex; justify-content:space-between; align-items:center;'>
+              <strong>${c.description}</strong>
+              <span class='badge badge-${status}'>${status}</span>
+            </div>
+            <div class='steps' style='margin-top:12px;'>
+              <div class='${s1}' title='Submitted'></div>
+              <div class='${l1}'></div>
+              <div class='${s2}' title='In Review'></div>
+              <div class='${l2}'></div>
+              <div class='${s3}' title='Decision'></div>
+            </div>
+            <div style='margin-top:8px; color:#6b7d8a;'>ID: ${c.claim_id} • $${Number(c.amount).toFixed(2)} • ${new Date(c.created_at).toLocaleDateString()}</div>
+          </div>`;
+      }).join('');
+    } catch { lifecycleList.textContent = 'Failed to load lifecycle'; }
   }
 });
