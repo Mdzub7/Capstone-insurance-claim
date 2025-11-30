@@ -70,30 +70,34 @@
       const userSelect = document.getElementById('userSelect');
       const yearSelect = document.getElementById('yearSelect');
       users.forEach(u=>{ const opt=document.createElement('option'); opt.value=u.user_id; opt.textContent=u.name||u.email||u.user_id; userSelect.appendChild(opt); });
-      // Use pending claims (available endpoint) for analytics preview
-      const pendRes = await fetch(`${API_BASE}/admin/claims/pending`, { headers });
-      let allClaims = pendRes.ok ? await pendRes.json() : [];
+      const claimsRes = await fetch(`${API_BASE}/admin/claims`, { headers });
+      let allClaims = claimsRes.ok ? await claimsRes.json() : [];
       if (!allClaims.length) { const now=new Date(); allClaims=[{created_at:now.toISOString(), amount:1200, claim_status:'PENDING', user_id:'demo'}]; }
       const years=Array.from(new Set(allClaims.map(c=> new Date(c.created_at).getFullYear()))).sort(); const currentYear=new Date().getFullYear(); yearSelect.innerHTML=years.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('');
       function render(){
         const year=parseInt(yearSelect.value||currentYear); const uid=userSelect.value;
-        const claims=allClaims.filter(c=> new Date(c.created_at).getFullYear()===year && (uid==='all' || c.user_id===uid));
+        const claims=allClaims.filter(c=> { const d=new Date(c.created_at); return !isNaN(d) && d.getFullYear()===year && (uid==='all' || c.user_id===uid); });
         const byMonth=Array(12).fill(0), amtByMonth=Array(12).fill(0);
         let p=0,a=0,rj=0; const totalsByUser={};
-        claims.forEach(c=>{ const d=new Date(c.created_at); byMonth[d.getMonth()]++; amtByMonth[d.getMonth()]+=Number(c.amount||0); if(c.claim_status==='PENDING')p++; });
+        claims.forEach(c=>{ const d=new Date(c.created_at); const m=d.getMonth(); byMonth[m]++; amtByMonth[m]+=Number(c.amount||0); const st=(c.claim_status||''); if(st==='PENDING')p++; else if(st==='APPROVED')a++; else if(st==='REJECTED')rj++; totalsByUser[c.user_id]=(totalsByUser[c.user_id]||0)+Number(c.amount||0); });
         const mctx=document.getElementById('chartMonthlyAll'); if (mctx) new Chart(mctx,{type:'bar',data:{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],datasets:[{label:'Claims',data:byMonth,backgroundColor:'#0926fe',borderRadius:6},{label:'Amount (₹)',data:amtByMonth,type:'line',borderColor:'#27ae60',yAxisID:'y1'}]},options:{responsive:true,scales:{y:{beginAtZero:true},y1:{beginAtZero:true,position:'right'}}}});
-        const sctx=document.getElementById('chartStatusAll'); if (sctx) new Chart(sctx,{type:'doughnut',data:{labels:['Pending'],datasets:[{data:[p],backgroundColor:['#f1c40f']}]} });
-        users.forEach(u=>{ totalsByUser[u.user_id]=0; });
-        allClaims.filter(c=> new Date(c.created_at).getFullYear()===year).forEach(c=>{ totalsByUser[c.user_id]=(totalsByUser[c.user_id]||0)+Number(c.amount||0); });
+        const sctx=document.getElementById('chartStatusAll'); if (sctx) new Chart(sctx,{type:'doughnut',data:{labels:['Pending','Approved','Rejected'],datasets:[{data:[p,a,rj],backgroundColor:['#f1c40f','#27ae60','#e74c3c']}]} });
+        const filteredUsers = uid==='all' ? users.filter(u=> claims.some(c=> c.user_id===u.user_id)) : users.filter(u=> u.user_id===uid);
         const topPairs=Object.entries(totalsByUser).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([uid,amt])=>{ const u=users.find(x=>x.user_id===uid); const label=(u && (u.name||u.email))||uid; return [label, amt]; });
         const tctx=document.getElementById('chartTopUsers'); if (tctx) new Chart(tctx,{type:'bar',data:{labels:topPairs.map(p=>p[0]),datasets:[{label:'Total Amount (₹)',data:topPairs.map(p=>p[1]),backgroundColor:'#00a6a6',borderRadius:6}]},options:{responsive:true,indexAxis:'y'} });
+        // Apply filters to the User Search table
+        const tbody=document.getElementById('searchResults');
+        if (tbody) tbody.innerHTML=filteredUsers.map(u=>`<tr><td>${u.name||''}</td><td>${u.email||''}</td><td>${u.role||''}</td><td>${u.patient_id||''}</td></tr>`).join('');
       }
       render();
       yearSelect.addEventListener('change', render); userSelect.addEventListener('change', render);
       // user search table render
       function renderUsers(q){
         const s=(q||'').toLowerCase();
-        const items=users.filter(u=> (u.email||'').toLowerCase().includes(s) || (u.name||'').toLowerCase().includes(s));
+        const year=parseInt(yearSelect.value||currentYear); const uid=userSelect.value;
+        const claimsInYear=allClaims.filter(c=> new Date(c.created_at).getFullYear()===year);
+        const allowedUserIds = uid==='all' ? new Set(claimsInYear.map(c=> c.user_id)) : new Set([uid]);
+        const items=users.filter(u=> ((u.email||'').toLowerCase().includes(s) || (u.name||'').toLowerCase().includes(s)) && allowedUserIds.has(u.user_id));
         const tbody=document.getElementById('searchResults');
         if (tbody) tbody.innerHTML=items.map(u=>`<tr><td>${u.name||''}</td><td>${u.email||''}</td><td>${u.role||''}</td><td>${u.patient_id||''}</td></tr>`).join('');
       }

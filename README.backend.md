@@ -11,7 +11,9 @@ FastAPI service with AWS integrations (DynamoDB, Secrets Manager). Provides auth
 - `GET /api/v1/claims/my` — Claims of the current user.
 - Admin:
   - `GET /api/v1/admin/users` — List users.
+  - `GET /api/v1/admin/claims` — List all claims; optional `status` query.
   - `GET /api/v1/admin/claims/pending` — Pending claims.
+  - `GET /api/v1/admin/claims/by-patient/{patient_id}` — Claims for a patient.
   - `POST /api/v1/admin/claims/{id}/approve` — Approve claim.
   - `POST /api/v1/admin/claims/{id}/reject` — Reject claim.
 
@@ -35,4 +37,4 @@ FastAPI service with AWS integrations (DynamoDB, Secrets Manager). Provides auth
 - Run: `python -m pytest` or `python run_tests.py`.
 
 ## Notes
-- Admin analytics in UI use available endpoints (pending + users). For full approved/rejected totals across all users, add an endpoint to list all claims or to query by status.
+- Admin analytics and dashboard use the all-claims endpoint for accurate totals, monthly aggregates, and status distribution. Patient search in Admin → Claims uses the by-patient endpoint.

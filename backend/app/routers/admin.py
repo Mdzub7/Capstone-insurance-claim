@@ -53,3 +53,10 @@ def list_claims(status: Optional[str] = None, current_user: dict = Depends(get_c
     """List all claims or filter by status (admin only)."""
     require_admin(current_user)
     return service.list_claims(status)
+
+
+@router.get("/claims/by-patient/{patient_id}")
+def list_claims_by_patient(patient_id: str, current_user: dict = Depends(get_current_user), service: AdminService = Depends(get_admin_service)):
+    """List all claims for a specific patient (admin only)."""
+    require_admin(current_user)
+    return service.list_claims_by_patient(patient_id)

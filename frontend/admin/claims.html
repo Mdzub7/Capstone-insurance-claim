@@ -50,24 +50,28 @@
   <script src="admin.js"></script>
   <script src="../patient/sidebar.js"></script>
   <script>
-    document.getElementById('searchBtn').addEventListener('click', async ()=>{
+    function renderClaimsByPatient(patientId) {
+      (async ()=>{
+        const API_BASE = 'http://localhost:8001/api/v1'
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token')
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const res = await fetch(`${API_BASE}/admin/claims/by-patient/${encodeURIComponent(patientId)}`, { headers })
+        if (!res.ok) { document.getElementById('searchTable').innerHTML = '<tr><td colspan="6">Failed to load claims</td></tr>'; return }
+        const claims = await res.json()
+        document.getElementById('searchTable').innerHTML = (claims.length?claims.map(c=>`
+          <tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description||''}</td><td>₹${Number(c.amount||0).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td><td>${c.s3_upload_url?`<a href='${c.s3_upload_url}' target='_blank'>View</a>`:'-'}</td></tr>
+        `).join(''):`<tr><td colspan="6">No claims found for ${patientId}</td></tr>`)
+      })()
+    }
+    document.getElementById('searchBtn').addEventListener('click', ()=>{
       const patientId = document.getElementById('searchPatientId').value.trim()
       if (!patientId) return
-      const API_BASE = 'http://localhost:8001/api/v1'
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token')
-      const headers = token ? { Authorization: `Bearer ${token}` } : {}
-      // Find user by patient_id first
-      const usersRes = await fetch(`${API_BASE}/admin/users`, { headers })
-      if (!usersRes.ok) { document.getElementById('searchTable').innerHTML = '<tr><td colspan="6">Failed to load users</td></tr>'; return }
-      const users = await usersRes.json()
-      const user = users.find(u=> u.patient_id === patientId)
-      if (!user) { document.getElementById('searchTable').innerHTML = '<tr><td colspan="6">No user found</td></tr>'; return }
-      const pendRes = await fetch(`${API_BASE}/admin/claims/pending`, { headers })
-      if (!pendRes.ok) { document.getElementById('searchTable').innerHTML = '<tr><td colspan="6">Failed to load claims</td></tr>'; return }
-      const claims = (await pendRes.json()).filter(c=> c.user_id === user.user_id)
-      document.getElementById('searchTable').innerHTML = claims.map(c=>`
-        <tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description}</td><td>₹${Number(c.amount).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td><td>${c.s3_upload_url?`<a href='${c.s3_upload_url}' target='_blank'>View</a>`:'-'}</td></tr>
-      `).join('')
+      renderClaimsByPatient(patientId)
+    })
+    document.getElementById('searchPatientId').addEventListener('keydown', (e)=>{
+      if (e.key==='Enter') {
+        const patientId = e.target.value.trim(); if (patientId) renderClaimsByPatient(patientId)
+      }
     })
   </script>
 </body>

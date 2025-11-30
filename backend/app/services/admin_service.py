@@ -34,6 +34,12 @@ class AdminService:
             resp = table.scan(FilterExpression=attr.exists())
         return resp.get("Items", [])
 
+    def list_claims_by_patient(self, patient_id: str) -> List[Dict]:
+        """List all claims for a given patient_id."""
+        table = get_dynamodb_table()
+        resp = table.scan(FilterExpression=boto3.dynamodb.conditions.Attr("patient_id").eq(patient_id))
+        return resp.get("Items", [])
+
     def update_claim_status(self, claim_id: str, status: str) -> Dict:
         """Update claim status."""
         table = get_dynamodb_table()

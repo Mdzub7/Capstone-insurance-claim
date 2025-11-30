@@ -25,9 +25,9 @@ Static HTML/CSS/JS app served via any static server. Uses Poppins/Inter fonts, C
 
 ## Admin Pages
 - Sidebar: Home, Profile, Dashboard, Claims, Analytics.
-- Dashboard: Real-time “Pending Claims” KPIs and charts via polling `GET /admin/claims/pending`.
-- Claims: Pending claims table with approve/reject actions; search by Patient ID shows that user’s pending claims.
-- Analytics: Year + user filters; monthly amounts, pending status donut, top users (pending amounts); user search table.
+- Dashboard: KPIs and charts based on all claims (`GET /admin/claims`) with real-time polling; status donut shows Pending/Approved/Rejected.
+- Claims: Pending claims table with approve/reject actions; Search by Patient ID lists all claims for that patient (`GET /admin/claims/by-patient/{patient_id}`).
+- Analytics: Year + user filters drive monthly counts/amounts, status donut, top users by amount and also filter the User Search table accordingly.
 
 ## Development
 - Start a static server in `frontend`: `python3 -m http.server 8080`
@@ -37,5 +37,5 @@ Static HTML/CSS/JS app served via any static server. Uses Poppins/Inter fonts, C
 - Semantic landmarks (`header`, `nav`, `aside`, `main`), focus states and high-contrast colors. Charts include readable labels.
 
 ## Notes
-- All endpoints preserved; no backend changes required for UI.
+- Admin endpoints include `GET /admin/claims` and `GET /admin/claims/by-patient/{patient_id}` used by dashboard/analytics/search.
 - S3 uploads are temporarily disabled; file selection is preview-only.
