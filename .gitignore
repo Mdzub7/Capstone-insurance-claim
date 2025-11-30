@@ -212,3 +212,12 @@ docker-compose.override.yml
 
 # IDE-specific local settings (safe defaults)
 *.code-workspace
+
+.mypy_cache/
+node_modules/
+tests/
+test-results/
+
+package-lock.json
+package.json
+playwright.config.ts

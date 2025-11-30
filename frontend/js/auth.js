@@ -64,7 +64,9 @@ if (loginForm) {
       setAuth(data.token, data.role, data.patient_id || data.user_id, remember);
       msg.textContent = "Login successful";
       msg.style.color = "green";
-      const target = data.role === "admin" ? "admin/dashboard.html" : "patient/dashboard.html";
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get('next');
+      const target = next || (data.role === "admin" ? "admin/dashboard.html" : "patient/dashboard.html");
       window.location.href = target;
     } catch (err) {
       msg.textContent = "Error: " + err.message;
