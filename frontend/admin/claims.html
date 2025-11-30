@@ -30,7 +30,7 @@
       <div class="card">
         <img class="page-brand" src="../assets/img/cigna1.png" alt="brand">
         <h1>Pending Claims</h1>
-        <div id="claimsDiv">Loading...</div>
+        <div id="claimsDiv" class="table-card">Loading...</div>
       </div>
       <div class="card">
         <h2>Search by Patient ID</h2>
@@ -62,9 +62,9 @@
       const users = await usersRes.json()
       const user = users.find(u=> u.patient_id === patientId)
       if (!user) { document.getElementById('searchTable').innerHTML = '<tr><td colspan="6">No user found</td></tr>'; return }
-      const claimsRes = await fetch(`${API_BASE}/claims/user/${user.user_id}`, { headers })
-      if (!claimsRes.ok) { document.getElementById('searchTable').innerHTML = '<tr><td colspan="6">Failed to load claims</td></tr>'; return }
-      const claims = await claimsRes.json()
+      const pendRes = await fetch(`${API_BASE}/admin/claims/pending`, { headers })
+      if (!pendRes.ok) { document.getElementById('searchTable').innerHTML = '<tr><td colspan="6">Failed to load claims</td></tr>'; return }
+      const claims = (await pendRes.json()).filter(c=> c.user_id === user.user_id)
       document.getElementById('searchTable').innerHTML = claims.map(c=>`
         <tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description}</td><td>₹${Number(c.amount).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td><td>${c.s3_upload_url?`<a href='${c.s3_upload_url}' target='_blank'>View</a>`:'-'}</td></tr>
       `).join('')

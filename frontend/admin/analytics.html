@@ -46,8 +46,14 @@
         <h2>User Search</h2>
         <div class="filters">
           <input id="userSearchBox" type="text" placeholder="Search user by email or name" />
+          <button id="userSearchBtn" class="auth-submit" style="width:auto;">Search</button>
         </div>
-        <div id="searchResults"></div>
+        <div class="table-card">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Patient ID</th></tr></thead>
+            <tbody id="searchResults"></tbody>
+          </table>
+        </div>
       </div>
     </main>
   </div>
@@ -64,28 +70,36 @@
       const userSelect = document.getElementById('userSelect');
       const yearSelect = document.getElementById('yearSelect');
       users.forEach(u=>{ const opt=document.createElement('option'); opt.value=u.user_id; opt.textContent=u.name||u.email||u.user_id; userSelect.appendChild(opt); });
-      // Aggregate claims for all users
-      async function fetchUserClaims(uid){ const r=await fetch(`${API_BASE}/claims/user/${uid}`, { headers }); return r.ok?await r.json():[] }
-      let allClaims=[]; for (const u of users){ if (u.user_id){ const c=await fetchUserClaims(u.user_id); allClaims=allClaims.concat(c);} }
-      if (!allClaims.length) { const now=new Date(); allClaims=[{created_at:now.toISOString(), amount:2500, claim_status:'APPROVED'},{created_at:now.toISOString(), amount:1200, claim_status:'PENDING'},{created_at:now.toISOString(), amount:800, claim_status:'REJECTED'}]; }
+      // Use pending claims (available endpoint) for analytics preview
+      const pendRes = await fetch(`${API_BASE}/admin/claims/pending`, { headers });
+      let allClaims = pendRes.ok ? await pendRes.json() : [];
+      if (!allClaims.length) { const now=new Date(); allClaims=[{created_at:now.toISOString(), amount:1200, claim_status:'PENDING', user_id:'demo'}]; }
       const years=Array.from(new Set(allClaims.map(c=> new Date(c.created_at).getFullYear()))).sort(); const currentYear=new Date().getFullYear(); yearSelect.innerHTML=years.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('');
       function render(){
         const year=parseInt(yearSelect.value||currentYear); const uid=userSelect.value;
-        const claims=allClaims.filter(c=> new Date(c.created_at).getFullYear()===year && (uid==='all' || !!users.find(u=>u.user_id===uid))); // user filter applies via separate chart
+        const claims=allClaims.filter(c=> new Date(c.created_at).getFullYear()===year && (uid==='all' || c.user_id===uid));
         const byMonth=Array(12).fill(0), amtByMonth=Array(12).fill(0);
         let p=0,a=0,rj=0; const totalsByUser={};
-        claims.forEach(c=>{ const d=new Date(c.created_at); byMonth[d.getMonth()]++; amtByMonth[d.getMonth()]+=Number(c.amount||0); if(c.claim_status==='PENDING')p++; if(c.claim_status==='APPROVED')a++; if(c.claim_status==='REJECTED')rj++; });
+        claims.forEach(c=>{ const d=new Date(c.created_at); byMonth[d.getMonth()]++; amtByMonth[d.getMonth()]+=Number(c.amount||0); if(c.claim_status==='PENDING')p++; });
         const mctx=document.getElementById('chartMonthlyAll'); if (mctx) new Chart(mctx,{type:'bar',data:{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],datasets:[{label:'Claims',data:byMonth,backgroundColor:'#0926fe',borderRadius:6},{label:'Amount (₹)',data:amtByMonth,type:'line',borderColor:'#27ae60',yAxisID:'y1'}]},options:{responsive:true,scales:{y:{beginAtZero:true},y1:{beginAtZero:true,position:'right'}}}});
-        const sctx=document.getElementById('chartStatusAll'); if (sctx) new Chart(sctx,{type:'doughnut',data:{labels:['Pending','Approved','Rejected'],datasets:[{data:[p,a,rj],backgroundColor:['#f1c40f','#27ae60','#e74c3c']}]} });
+        const sctx=document.getElementById('chartStatusAll'); if (sctx) new Chart(sctx,{type:'doughnut',data:{labels:['Pending'],datasets:[{data:[p],backgroundColor:['#f1c40f']}]} });
         users.forEach(u=>{ totalsByUser[u.user_id]=0; });
-        allClaims.forEach(c=>{ const u=users.find(u=> u.user_id && new Date(c.created_at).getFullYear()===year); /* simplified mapping */ });
-        // simple top users by amount (aggregate by email if available)
-        const topMap={}; allClaims.filter(c=> new Date(c.created_at).getFullYear()===year).forEach(c=>{ const email=(c.user_email||'Unknown'); topMap[email]=(topMap[email]||0)+Number(c.amount||0); });
-        const topPairs=Object.entries(topMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+        allClaims.filter(c=> new Date(c.created_at).getFullYear()===year).forEach(c=>{ totalsByUser[c.user_id]=(totalsByUser[c.user_id]||0)+Number(c.amount||0); });
+        const topPairs=Object.entries(totalsByUser).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([uid,amt])=>{ const u=users.find(x=>x.user_id===uid); const label=(u && (u.name||u.email))||uid; return [label, amt]; });
         const tctx=document.getElementById('chartTopUsers'); if (tctx) new Chart(tctx,{type:'bar',data:{labels:topPairs.map(p=>p[0]),datasets:[{label:'Total Amount (₹)',data:topPairs.map(p=>p[1]),backgroundColor:'#00a6a6',borderRadius:6}]},options:{responsive:true,indexAxis:'y'} });
       }
       render();
       yearSelect.addEventListener('change', render); userSelect.addEventListener('change', render);
+      // user search table render
+      function renderUsers(q){
+        const s=(q||'').toLowerCase();
+        const items=users.filter(u=> (u.email||'').toLowerCase().includes(s) || (u.name||'').toLowerCase().includes(s));
+        const tbody=document.getElementById('searchResults');
+        if (tbody) tbody.innerHTML=items.map(u=>`<tr><td>${u.name||''}</td><td>${u.email||''}</td><td>${u.role||''}</td><td>${u.patient_id||''}</td></tr>`).join('');
+      }
+      renderUsers('');
+      document.getElementById('userSearchBtn').addEventListener('click',()=> renderUsers(document.getElementById('userSearchBox').value));
+      document.getElementById('userSearchBox').addEventListener('input',(e)=> renderUsers(e.target.value));
     })();
   </script>
 </body>
