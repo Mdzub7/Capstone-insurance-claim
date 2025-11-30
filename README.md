@@ -1,38 +1,43 @@
 # Cloud-Native Insurance Claim Filing System
 
-## Setup
-- Prerequisites: Python 3.9+, AWS credentials, Node-capable browser.
+## Overview
+Modern claims portal with patient and admin experiences. Frontend is static (HTML/CSS/JS) and themed to match Cigna styling; backend is FastAPI with AWS integrations.
+
+## Quick Start
 - Backend:
   - `cd backend`
   - `python -m venv .venv && source .venv/bin/activate`
   - `pip install -r requirements.txt`
-  - Ensure AWS Secrets Manager has a secret named as `JWT_SECRET_NAME` in `backend/app/core/config.py`.
+  - Configure AWS credentials and set Secrets Manager JWT secret per `backend/app/core/config.py`.
   - Run: `uvicorn app.main:app --reload --port 8001`
 - Frontend:
-  - Open `frontend/index.html` in a browser.
+  - `cd frontend`
+  - `python3 -m http.server 8080`
+  - Open `http://localhost:8080/index.html`
 
-## Auth
-- Registration: `frontend/register.html` → `POST /api/v1/auth/register`.
-- Login: `frontend/login.html` → `POST /api/v1/auth/login`; JWT stored in session/local storage.
-- Role-based routing: redirects to patient or admin pages.
+## Documentation
+- Frontend: `README.frontend.md` — layouts, pages, auth guards, charts.
+- Backend: `README.backend.md` — endpoints, data model, AWS setup.
 
-## Patient Portal
-- Profile: `frontend/patient/profile.html` → `GET /api/v1/users/me`.
-- Claims History: `frontend/patient/claims.html` → `GET /api/v1/claims/my`.
-- Submit Claim: `frontend/patient/submit.html` → `POST /api/v1/claims/` then S3 PUT via presigned URL.
+## Pages and Flows
+- Home + Member Guide (demo access).
+- Patient portal: Profile, Dashboard (KPIs/charts), Claims History (filters + timeline), Submit Claim (INR, dropzone), Claim Lifecycle.
+- Admin portal: Profile, Dashboard (pending KPIs/charts with polling), Claims (pending table + approve/reject + patient search), Analytics (year/user filters, monthly amounts, status donut, top users).
 
-## Admin
-- Dashboard: `frontend/admin/dashboard.html` → users list and pending claims; approve/reject routes under `/api/v1/admin/claims/...`.
+## Endpoints Used
+- Auth: `/api/v1/auth/login`, `/api/v1/auth/register`, `/api/v1/users/me`
+- Claims: `/api/v1/claims/` (POST), `/api/v1/claims/my` (GET)
+- Admin: `/api/v1/admin/users`, `/api/v1/admin/claims/pending`, approve/reject under `/api/v1/admin/claims/{id}/...`
 
 ## Testing
-- `pytest` from `backend` to run unit/integration tests in `backend/tests/`.
+- Backend tests in `backend/tests/` — run `pytest` or `python run_tests.py`.
+- Optional UI checks with Playwright from `frontend`: `npx playwright test`.
 
 ## Deployment Checklist
-- Enable S3 bucket and notifications in Terraform; reconcile IAM policies.
-- Configure Secrets Manager and grant backend IAM to read.
-- Verify CORS origins.
+- Terraform: SQS, DynamoDB, Lambda, IAM; enable S3 bucket and notifications if uploads are needed.
+- Secrets Manager configured and IAM access granted.
+- CORS configured for frontend origin.
 
-## Next Steps
-- Add pagination and filtering to claims lists.
-- Expand audit logging and observability.
-- Prepare Lambda Bedrock integration.
+## Notes
+- S3 uploads are temporarily disabled in UI; presigned URLs are still returned by backend.
+- For full admin analytics across all statuses, add an endpoint to list claims or query by status; current UI uses available endpoints (pending + users) and polls for real-time updates.
