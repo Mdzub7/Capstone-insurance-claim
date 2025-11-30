@@ -13,7 +13,7 @@ async function fetchUsers() {
 
 async function fetchPendingClaims() {
   const res = await fetch(`${API_BASE}/admin/claims/pending`, { headers: authHeader() });
-  if (!res.ok) throw new Error("Failed to load claims");
+  if (!res.ok) return [];
   return res.json();
 }
 
@@ -56,43 +56,42 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
   if (claimsDiv) {
-    try {
-      const claims = await fetchPendingClaims();
-      function renderClaims(query=''){
-        const q = query.toLowerCase();
-        let html = "<table style='width:100%'><thead><tr><th>ID</th><th>Description</th><th>Amount</th><th>Status</th><th>Document</th><th style='min-width:160px;'>Action</th></tr></thead><tbody>";
-        claims.filter(c=> (c.description||'').toLowerCase().includes(q) || (c.claim_id||'').toLowerCase().includes(q)).forEach(c => {
-          html += `<tr><td>${c.claim_id}</td><td>${c.description}</td><td>₹${c.amount}</td><td>${c.claim_status}</td><td>${c.s3_upload_url?`<a href='${c.s3_upload_url}' target='_blank'>View</a>`:'-'}</td>
-            <td>
-              <button data-id='${c.claim_id}' class='btn-approve approve'>Approve</button>
-              <button data-id='${c.claim_id}' class='btn-reject reject'>Reject</button>
-            </td></tr>`;
-        });
-        html += "</tbody></table>";
-        claimsDiv.innerHTML = html;
-      }
-      renderClaims('');
-      const csearch = document.getElementById('claimsSearch');
-      if (csearch) csearch.addEventListener('input', e=> renderClaims(e.target.value));
-      claimsDiv.addEventListener("click", async (e) => {
-        const t = e.target;
-        if (t.classList.contains("delete-user")) {
-          const id = t.dataset.id;
-          await fetch(`${API_BASE}/admin/users/${id}`, { method: 'DELETE', headers: authHeader() });
-          t.closest('tr').remove();
-        }
-        if (t.classList.contains("approve")) {
-          await approveClaim(t.dataset.id);
-          t.closest("tr").querySelector("td:nth-child(4)").textContent = "APPROVED";
-        }
-        if (t.classList.contains("reject")) {
-          await rejectClaim(t.dataset.id);
-          t.closest("tr").querySelector("td:nth-child(4)").textContent = "REJECTED";
-        }
+    let claims = [];
+    try { claims = await fetchPendingClaims(); } catch {}
+    function renderClaims(query=''){
+      const q = query.toLowerCase();
+      const filtered = claims.filter(c=> (c.description||'').toLowerCase().includes(q) || (c.claim_id||'').toLowerCase().includes(q));
+      let html = "<table style='width:100%'><thead><tr><th>ID</th><th>Description</th><th>Amount</th><th>Status</th><th>Document</th><th style='min-width:160px;'>Action</th></tr></thead><tbody>";
+      if (!filtered.length) { html += "<tr><td colspan='6'>No pending claims</td></tr>"; }
+      filtered.forEach(c => {
+        html += `<tr><td>${c.claim_id}</td><td>${c.description||''}</td><td>₹${Number(c.amount||0).toFixed(2)}</td><td>${c.claim_status||''}</td><td>${c.s3_upload_url?`<a href='${c.s3_upload_url}' target='_blank'>View</a>`:'-'}</td>
+          <td>
+            <button data-id='${c.claim_id}' class='btn-approve approve'>Approve</button>
+            <button data-id='${c.claim_id}' class='btn-reject reject'>Reject</button>
+          </td></tr>`;
       });
-    } catch (e) {
-      claimsDiv.textContent = "Failed to load claims";
+      html += "</tbody></table>";
+      claimsDiv.innerHTML = html;
     }
+    renderClaims('');
+    const csearch = document.getElementById('claimsSearch');
+    if (csearch) csearch.addEventListener('input', e=> renderClaims(e.target.value));
+    claimsDiv.addEventListener("click", async (e) => {
+      const t = e.target;
+      if (t.classList.contains("delete-user")) {
+        const id = t.dataset.id;
+        await fetch(`${API_BASE}/admin/users/${id}`, { method: 'DELETE', headers: authHeader() });
+        t.closest('tr').remove();
+      }
+      if (t.classList.contains("approve")) {
+        await approveClaim(t.dataset.id);
+        t.closest("tr").querySelector("td:nth-child(4)").textContent = "APPROVED";
+      }
+      if (t.classList.contains("reject")) {
+        await rejectClaim(t.dataset.id);
+        t.closest("tr").querySelector("td:nth-child(4)").textContent = "REJECTED";
+      }
+    });
   }
 
   // Admin profile details
