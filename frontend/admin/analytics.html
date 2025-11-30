@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Analytics</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="patient-shell">
+    <aside class="sidebar">
+      <div class="sidebar-top"><button class="sidebar-toggle" aria-label="Toggle sidebar">☰</button></div>
+      <div class="sidebar-header">
+        <img class="sidebar-avatar" src="../assets/img/profile.png" alt="Avatar">
+        <div>
+          <div class="sidebar-name" id="sbName">Admin</div>
+          <div class="sidebar-id" id="sbId">ID</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <a class="sidebar-link" href="../index.html"><img class="sidebar-icon" src="../assets/icons/home.svg"><span>Home</span></a>
+        <a class="sidebar-link" href="profile.html"><img class="sidebar-icon" src="../assets/icons/patient.svg"><span>Profile</span></a>
+        <a class="sidebar-link" href="dashboard.html"><img class="sidebar-icon" src="../assets/icons/dashboard.svg"><span>Dashboard</span></a>
+        <a class="sidebar-link" href="claims.html"><img class="sidebar-icon" src="../assets/icons/history.svg"><span>Claims</span></a>
+        <a class="sidebar-link active" href="analytics.html"><img class="sidebar-icon" src="../assets/icons/lifecycle.svg"><span>Analytics</span></a>
+      </nav>
+      <img class="sidebar-bottom-logo" src="../assets/img/cigna.png" alt="Cigna">
+    </aside>
+    <main class="content">
+      <div class="card">
+        <img class="page-brand" src="../assets/img/cigna1.png" alt="brand">
+        <h1>Pending Claims Analytics</h1>
+        <canvas id="pendingAmounts"></canvas>
+      </div>
+      <div class="card">
+        <h2>User Search</h2>
+        <div class="filters">
+          <input id="userSearchBox" type="text" placeholder="Search user by email or name" />
+        </div>
+        <div id="searchResults"></div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="admin.js"></script>
+  <script src="../patient/sidebar.js"></script>
+  <script>
+    (async function(){
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const API_BASE = 'http://localhost:8001/api/v1'
+      // pending amounts bar
+      const r = await fetch(`${API_BASE}/admin/claims/pending`, { headers })
+      if (r.ok) {
+        const claims = await r.json()
+        const labels = claims.map(c=> c.claim_id)
+        const data = claims.map(c=> Number(c.amount)||0)
+        const ctx = document.getElementById('pendingAmounts')
+        if (ctx && window.Chart) new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label:'Pending Amount (₹)', data, backgroundColor:'#f1c40f', borderRadius:6 }] }, options:{ responsive:true } })
+      }
+      // simple user search client-side
+      const usersRes = await fetch(`${API_BASE}/admin/users`, { headers })
+      let users = []
+      if (usersRes.ok) users = await usersRes.json()
+      const box = document.getElementById('userSearchBox')
+      const list = document.getElementById('searchResults')
+      function render(q){
+        const s = (q||'').toLowerCase()
+        const items = users.filter(u=> (u.email||'').toLowerCase().includes(s) || (u.name||'').toLowerCase().includes(s))
+        list.innerHTML = `<ul style='list-style:none;padding:0;'>${items.map(u=>`<li style='padding:8px 0;border-bottom:1px solid #eef1f5;'>${u.name||''} • ${u.email||''} • ${u.role||''}</li>`).join('')}</ul>`
+      }
+      render('')
+      box.addEventListener('input', e=> render(e.target.value))
+    })()
+  </script>
+</body>
+</html>

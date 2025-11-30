@@ -148,17 +148,17 @@ window.addEventListener("DOMContentLoaded", async () => {
         <div class='stat-card'><div class='stat-title'>Total Claims</div><div class='stat-value'>${claims.length}</div></div>
         <div class='stat-card'><div class='stat-title'>Approved</div><div class='stat-value'>${approved}</div></div>
         <div class='stat-card'><div class='stat-title'>Rejected</div><div class='stat-value'>${rejected}</div></div>
-        <div class='stat-card'><div class='stat-title'>Total Amount</div><div class='stat-value'>$${totalAmt.toFixed(2)}</div></div>`;
+        <div class='stat-card'><div class='stat-title'>Total Amount</div><div class='stat-value'>₹${totalAmt.toFixed(2)}</div></div>`;
     }
     if (chartMonthly && window.Chart) {
-      new Chart(chartMonthly, { type:'bar', data:{ labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets:[{ label:'Claims', data:byMonth, backgroundColor:'#0926fe' }, { label:'Amount ($)', data:amtByMonth, type:'line', borderColor:'#00a6a6', yAxisID:'y1' }] }, options:{ responsive:true, scales:{ y:{ beginAtZero:true }, y1:{ beginAtZero:true, position:'right' } } } });
+      new Chart(chartMonthly, { type:'bar', data:{ labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets:[{ label:'Claims', data:byMonth, backgroundColor:'#0926fe', borderRadius:6 }, { label:'Amount (₹)', data:amtByMonth, type:'line', borderColor:'#27ae60', yAxisID:'y1' }] }, options:{ responsive:true, scales:{ y:{ beginAtZero:true }, y1:{ beginAtZero:true, position:'right' } } } });
     }
     if (chartStatus && window.Chart) {
       new Chart(chartStatus, { type:'doughnut', data:{ labels:['Pending','Approved','Rejected'], datasets:[{ data:[pending,approved,rejected], backgroundColor:['#ffeeba','#d4edda','#f8d7da'] }] }, options:{ responsive:true } });
     }
     if (recentTable) {
       const r = claims.slice().sort((a,b)=> new Date(b.created_at)-new Date(a.created_at)).slice(0,10);
-      recentTable.innerHTML = r.map(c=>`<tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description}</td><td>$${Number(c.amount).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td></tr>`).join('');
+      recentTable.innerHTML = r.map(c=>`<tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description}</td><td>₹${Number(c.amount).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td></tr>`).join('');
     }
   }
 
@@ -170,7 +170,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (profileStats) {
         profileStats.innerHTML = `
           <div class='stat-card'><div class='stat-title'>Claims so far</div><div class='stat-value'>${claims.length}</div></div>
-          <div class='stat-card'><div class='stat-title'>Total amount</div><div class='stat-value'>$${totalAmt.toFixed(2)}</div></div>
+          <div class='stat-card'><div class='stat-title'>Total amount</div><div class='stat-value'>₹${totalAmt.toFixed(2)}</div></div>
           <div class='stat-card'><div class='stat-title'>Pending</div><div class='stat-value'>${pending}</div></div>`;
       }
     } catch {}
@@ -185,7 +185,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const year = yearFilter ? parseInt(yearFilter.value) : new Date().getFullYear();
       const filtered = claims.filter(c => (status==='all' || c.claim_status===status) && new Date(c.created_at).getFullYear()===year);
       const tbody = document.getElementById('claimsTable');
-      if (tbody) tbody.innerHTML = filtered.map(c=>`<tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description}</td><td>$${Number(c.amount).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td></tr>`).join('');
+      if (tbody) tbody.innerHTML = filtered.map(c=>`<tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description}</td><td>₹${Number(c.amount).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td></tr>`).join('');
       const ctx = document.getElementById('historyTimeline');
       if (ctx && window.Chart) {
         const byMonth = Array(12).fill(0);
@@ -220,14 +220,14 @@ window.addEventListener("DOMContentLoaded", async () => {
               <strong>${c.description}</strong>
               <span class='badge badge-${status}'>${status}</span>
             </div>
-            <div class='steps' style='margin-top:12px;'>
+            <div class='steps status-${status}' style='margin-top:12px;'>
               <div class='${s1}' title='Submitted'></div>
               <div class='${l1}'></div>
               <div class='${s2}' title='In Review'></div>
               <div class='${l2}'></div>
               <div class='${s3}' title='Decision'></div>
             </div>
-            <div style='margin-top:8px; color:#6b7d8a;'>ID: ${c.claim_id} • $${Number(c.amount).toFixed(2)} • ${new Date(c.created_at).toLocaleDateString()}</div>
+            <div style='margin-top:8px; color:#6b7d8a;'>ID: ${c.claim_id} • ₹${Number(c.amount).toFixed(2)} • ${new Date(c.created_at).toLocaleDateString()}</div>
           </div>`;
       }).join('');
     } catch { lifecycleList.textContent = 'Failed to load lifecycle'; }

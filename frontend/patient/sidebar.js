@@ -22,9 +22,11 @@ document.addEventListener('DOMContentLoaded', populateSidebar)
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.querySelector('.sidebar-toggle')
   const sidebar = document.querySelector('.sidebar')
+  const shell = document.querySelector('.patient-shell')
   if (btn && sidebar) {
     btn.addEventListener('click', ()=>{
       sidebar.classList.toggle('collapsed')
+      if (shell) shell.classList.toggle('collapsed')
     })
   }
 })
