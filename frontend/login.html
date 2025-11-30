@@ -17,7 +17,7 @@
         <a href="index.html" class="nav-link">Home</a>
         <a href="patient/submit.html" class="nav-link">Submit Claim</a>
         <a href="patient/claims.html" class="nav-link">Claims History</a>
-        <a href="dashboard.html" class="nav-link">Member Guide</a>
+        <a href="member-guide.html" class="nav-link">Member Guide</a>
       </nav>
       <div class="header-actions">
         <a class="cta-register" href="register.html">Register</a>
@@ -60,15 +60,6 @@
         <div id="loginMessage" class="auth-message"></div>
       </form>
       <p class="auth-footer-text">Don’t have an account? <a href="register.html">Sign Up</a></p>
-      <div style="margin-top:16px; text-align:center;">
-        <p style="color:#6b7d8a; font-size:13px;">Demo credentials:</p>
-        <p style="font-size:12px;">Patient: demo.user@example.com / Demo@12345</p>
-        <p style="font-size:12px;">Admin: demo.admin@example.com / Demo@12345</p>
-        <div style="margin-top:8px; display:flex; gap:8px; justify-content:center;">
-          <button type="button" class="auth-submit" id="demoPatientBtn" style="width:auto; padding:8px 12px;">Use Demo Patient</button>
-          <button type="button" class="auth-submit" id="demoAdminBtn" style="width:auto; padding:8px 12px;">Use Demo Admin</button>
-        </div>
-      </div>
     </div>
   </main>
   <script src="js/auth.js"></script>
@@ -80,14 +71,6 @@
       const m = method.value;
       emailGroup.style.display = m === 'email' ? 'block' : 'none';
       patientGroup.style.display = m === 'patient' ? 'block' : 'none';
-    });
-    document.getElementById('demoPatientBtn').addEventListener('click', ()=>{
-      setAuth('DEMO', 'patient', 'PATIENT#DEMO', true);
-      window.location.href = 'patient/dashboard.html';
-    });
-    document.getElementById('demoAdminBtn').addEventListener('click', ()=>{
-      setAuth('DEMO', 'admin', null, true);
-      window.location.href = 'admin/dashboard.html';
     });
   </script>
 </body>

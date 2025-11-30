@@ -183,7 +183,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     function render() {
       const status = statusFilter ? statusFilter.value : 'all';
       const year = yearFilter ? parseInt(yearFilter.value) : new Date().getFullYear();
-      const filtered = claims.filter(c => (status==='all' || c.claim_status===status) && new Date(c.created_at).getFullYear()===year);
+      const qEl = document.getElementById('searchQuery');
+      const q = qEl ? qEl.value.toLowerCase() : '';
+      const filtered = claims.filter(c => (status==='all' || c.claim_status===status) && new Date(c.created_at).getFullYear()===year && ((c.description||'').toLowerCase().includes(q) || (c.claim_id||'').toLowerCase().includes(q)));
       const tbody = document.getElementById('claimsTable');
       if (tbody) tbody.innerHTML = filtered.map(c=>`<tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description}</td><td>₹${Number(c.amount).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td></tr>`).join('');
       const ctx = document.getElementById('historyTimeline');
@@ -195,6 +197,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
     if (statusFilter) statusFilter.addEventListener('change', render);
     if (yearFilter) yearFilter.addEventListener('change', render);
+    const qEl2 = document.getElementById('searchQuery');
+    if (qEl2) qEl2.addEventListener('input', render);
     render();
   }
 

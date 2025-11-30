@@ -38,12 +38,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (usersDiv) {
     try {
       const users = await fetchUsers();
-      let html = "<table style='width:100%'><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Patient ID</th><th>Action</th></tr></thead><tbody>";
-      users.forEach(u => {
-        html += `<tr><td>${u.name || ''}</td><td>${u.email || ''}</td><td>${u.role}</td><td>${u.patient_id || ''}</td><td><button class='delete-user' data-id='${u.user_id}'>Delete</button></td></tr>`;
-      });
-      html += "</tbody></table>";
-      usersDiv.innerHTML = html;
+      function renderUsers(query=''){
+        const q = query.toLowerCase();
+        let html = "<table style='width:100%'><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Patient ID</th><th>Action</th></tr></thead><tbody>";
+        users.filter(u => (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q)).forEach(u => {
+          html += `<tr><td>${u.name || ''}</td><td>${u.email || ''}</td><td>${u.role}</td><td>${u.patient_id || ''}</td><td><button class='delete-user' data-id='${u.user_id}'>Delete</button></td></tr>`;
+        });
+        html += "</tbody></table>";
+        usersDiv.innerHTML = html;
+      }
+      renderUsers('');
+      const search = document.getElementById('userSearch');
+      if (search) search.addEventListener('input', e=> renderUsers(e.target.value));
     } catch (e) {
       usersDiv.textContent = "Failed to load users";
     }
@@ -51,16 +57,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (claimsDiv) {
     try {
       const claims = await fetchPendingClaims();
-      let html = "<table style='width:100%'><thead><tr><th>ID</th><th>Description</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody>";
-      claims.forEach(c => {
-        html += `<tr><td>${c.claim_id}</td><td>${c.description}</td><td>$${c.amount}</td><td>${c.claim_status}</td>
-          <td>
-            <button data-id='${c.claim_id}' class='approve'>Approve</button>
-            <button data-id='${c.claim_id}' class='reject'>Reject</button>
-          </td></tr>`;
-      });
-      html += "</tbody></table>";
-      claimsDiv.innerHTML = html;
+      function renderClaims(query=''){
+        const q = query.toLowerCase();
+        let html = "<table style='width:100%'><thead><tr><th>ID</th><th>Description</th><th>Amount</th><th>Status</th><th>Document</th><th>Action</th></tr></thead><tbody>";
+        claims.filter(c=> (c.description||'').toLowerCase().includes(q) || (c.claim_id||'').toLowerCase().includes(q)).forEach(c => {
+          html += `<tr><td>${c.claim_id}</td><td>${c.description}</td><td>₹${c.amount}</td><td>${c.claim_status}</td><td>${c.s3_upload_url?`<a href='${c.s3_upload_url}' target='_blank'>View</a>`:'-'}</td>
+            <td>
+              <button data-id='${c.claim_id}' class='approve'>Approve</button>
+              <button data-id='${c.claim_id}' class='reject'>Reject</button>
+            </td></tr>`;
+        });
+        html += "</tbody></table>";
+        claimsDiv.innerHTML = html;
+      }
+      renderClaims('');
+      const csearch = document.getElementById('claimsSearch');
+      if (csearch) csearch.addEventListener('input', e=> renderClaims(e.target.value));
       claimsDiv.addEventListener("click", async (e) => {
         const t = e.target;
         if (t.classList.contains("delete-user")) {
