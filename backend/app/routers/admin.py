@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
 from app.core.security import get_current_user, require_admin
 from app.services.admin_service import AdminService
 
@@ -45,3 +46,10 @@ def reject_claim(claim_id: str, current_user: dict = Depends(get_current_user), 
     """Reject a claim (admin only)."""
     require_admin(current_user)
     return service.update_claim_status(claim_id, "REJECTED")
+
+
+@router.get("/claims")
+def list_claims(status: Optional[str] = None, current_user: dict = Depends(get_current_user), service: AdminService = Depends(get_admin_service)):
+    """List all claims or filter by status (admin only)."""
+    require_admin(current_user)
+    return service.list_claims(status)

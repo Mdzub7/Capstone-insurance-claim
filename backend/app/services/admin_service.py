@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 import boto3
 from botocore.exceptions import ClientError
 from app.core.database import get_dynamodb_table
@@ -22,6 +22,16 @@ class AdminService:
         """List claims with status PENDING."""
         table = get_dynamodb_table()
         resp = table.scan(FilterExpression=boto3.dynamodb.conditions.Attr("claim_status").eq("PENDING"))
+        return resp.get("Items", [])
+
+    def list_claims(self, status: Optional[str] = None) -> List[Dict]:
+        """List claims, optionally filtered by status."""
+        table = get_dynamodb_table()
+        attr = boto3.dynamodb.conditions.Attr("claim_status")
+        if status:
+            resp = table.scan(FilterExpression=attr.eq(status))
+        else:
+            resp = table.scan(FilterExpression=attr.exists())
         return resp.get("Items", [])
 
     def update_claim_status(self, claim_id: str, status: str) -> Dict:

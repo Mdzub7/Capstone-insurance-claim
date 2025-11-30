@@ -17,6 +17,12 @@ async function fetchPendingClaims() {
   return res.json();
 }
 
+async function fetchAllClaims() {
+  const res = await fetch(`${API_BASE}/admin/claims`, { headers: authHeader() });
+  if (!res.ok) return [];
+  return res.json();
+}
+
 async function approveClaim(id) {
   const res = await fetch(`${API_BASE}/admin/claims/${id}/approve`, { method: "POST", headers: authHeader() });
   if (!res.ok) throw new Error("Approve failed");
@@ -107,25 +113,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch { adminProfile.textContent = 'Failed to load profile'; }
   }
 
-  // Admin stats & charts based on pending claims with polling for real-time updates
+  // Admin stats & charts based on all claims with polling for real-time updates
   async function refreshAdmin() {
     try {
-      const pendingClaims = await fetchPendingClaims();
-      const pending = pendingClaims.length;
-      const totalAmtPending = pendingClaims.reduce((s,c)=> s + Number(c.amount||0), 0);
+      const allClaims = await fetchAllClaims();
+      const pending = allClaims.filter(c=> (c.claim_status||'') === 'PENDING').length;
+      const approved = allClaims.filter(c=> (c.claim_status||'') === 'APPROVED').length;
+      const rejected = allClaims.filter(c=> (c.claim_status||'') === 'REJECTED').length;
+      const totalAmt = allClaims.reduce((s,c)=> s + Number(c.amount||0), 0);
       if (adminStats) {
         adminStats.innerHTML = `
-          <div class='stat-card'><div class='stat-title'>Pending Claims</div><div class='stat-value'>${pending}</div></div>
-          <div class='stat-card'><div class='stat-title'>Pending Amount</div><div class='stat-value'>₹${totalAmtPending.toFixed(2)}</div></div>
+          <div class='stat-card'><div class='stat-title'>Total Claims</div><div class='stat-value'>${allClaims.length}</div></div>
+          <div class='stat-card'><div class='stat-title'>Total Amount</div><div class='stat-value'>₹${totalAmt.toFixed(2)}</div></div>
           <div class='stat-card'><div class='stat-title'>Total Users</div><div class='stat-value'>${(await fetchUsers()).length}</div></div>`;
       }
       if (adminMonthly && window.Chart) {
         const byMonth = Array(12).fill(0); const amtByMonth = Array(12).fill(0);
-        pendingClaims.forEach(c=>{ const d=new Date(c.created_at); byMonth[d.getMonth()]++; amtByMonth[d.getMonth()]+=Number(c.amount||0); });
-        new Chart(adminMonthly, { type:'bar', data:{ labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets:[{ label:'Pending Claims', data:byMonth, backgroundColor:'#0926fe', borderRadius:6 }, { label:'Pending Amount (₹)', data:amtByMonth, type:'line', borderColor:'#27ae60', yAxisID:'y1' }] }, options:{ responsive:true, scales:{ y:{ beginAtZero:true }, y1:{ beginAtZero:true, position:'right' } } } });
+        allClaims.forEach(c=>{ const d=new Date(c.created_at); if (!isNaN(d)) { byMonth[d.getMonth()]++; amtByMonth[d.getMonth()]+=Number(c.amount||0); } });
+        new Chart(adminMonthly, { type:'bar', data:{ labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets:[{ label:'Claims', data:byMonth, backgroundColor:'#0926fe', borderRadius:6 }, { label:'Amount (₹)', data:amtByMonth, type:'line', borderColor:'#27ae60', yAxisID:'y1' }] }, options:{ responsive:true, scales:{ y:{ beginAtZero:true }, y1:{ beginAtZero:true, position:'right' } } } });
       }
       if (adminStatus && window.Chart) {
-        new Chart(adminStatus, { type:'doughnut', data:{ labels:['Pending'], datasets:[{ data:[pending], backgroundColor:['#f1c40f'] }] } });
+        new Chart(adminStatus, { type:'doughnut', data:{ labels:['Pending','Approved','Rejected'], datasets:[{ data:[pending, approved, rejected], backgroundColor:['#f1c40f','#27ae60','#e74c3c'] }] } });
       }
     } catch {}
   }
