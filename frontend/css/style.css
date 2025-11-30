@@ -179,6 +179,34 @@ button:hover { background-color: #0926fe; }
 .footer-bottom { margin-top: var(--space-6); display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.15); padding-top: var(--space-4); }
 .footer-links a { color: #cfe7ff; text-decoration: none; margin-left: var(--space-4); }
 .footer-links a:hover { text-decoration: underline; }
+.site-nav .nav-link { font-weight: var(--font-weight-bold); }
+
+/* Auth pages */
+.auth-page { min-height: calc(100vh - 64px); background: var(--cigna-blue); display: grid; place-items: center; padding: var(--space-6); }
+.auth-card { width: 100%; max-width: 420px; background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: var(--space-6); }
+.auth-logo { height: 40px; display: block; margin: 0 auto var(--space-4); }
+.auth-title { text-align: center; color: var(--cigna-dark); font-family: var(--font-heading); }
+.auth-sub { text-align: center; color: #4b5e6d; margin-bottom: var(--space-4); }
+.divider { position: relative; margin: var(--space-4) 0; height: 1px; background: #eef1f5; }
+.divider-text { position: absolute; left: 50%; transform: translateX(-50%) translateY(-50%); top: 50%; background: #fff; padding: 0 var(--space-2); color: #6b7d8a; font-size: 12px; }
+.auth-actions { display: flex; align-items: center; justify-content: space-between; margin: var(--space-3) 0; }
+.forgot-link { color: #0926fe; text-decoration: none; }
+.forgot-link:hover { text-decoration: underline; }
+.auth-submit { width: 100%; background: var(--primary-color); color: #fff; padding: 12px; border: none; border-radius: var(--radius-sm); font-weight: var(--font-weight-bold); cursor: pointer; }
+.auth-submit:hover { background: #0926fe; }
+.auth-message { margin-top: var(--space-4); font-weight: var(--font-weight-bold); }
+.auth-footer-text { margin-top: var(--space-4); text-align: center; }
+
+/* Auth theme navbar overrides */
+.auth-theme .site-header { background: #fff; color: #000; }
+.auth-theme .nav-link { color: #000; }
+.auth-theme .nav-link:hover { background: rgba(0,0,0,0.06); }
+.auth-theme .cta-login { background: #0926fe; color: #fff; }
+.auth-theme .cta-register { border-color: #0926fe; color: #0926fe; }
+.auth-theme .cta-register:hover { background: rgba(9,38,254,0.10); }
+
+/* Remember me alignment */
+.remember-label { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 
 /* Navbar emphasis */
 .site-nav .nav-link { font-weight: var(--font-weight-bold); }

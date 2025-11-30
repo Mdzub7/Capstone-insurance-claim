@@ -4,21 +4,42 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login • Cigna Claims</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-  <div class="container">
-    <div class="card" role="form" aria-labelledby="loginTitle">
-      <h1 id="loginTitle">Portal Access</h1>
-      <p>Enter your credentials to access your portal.</p>
+<body class="auth-theme">
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html"><img class="brand-logo" src="assets/img/cigna1.png" alt="Cigna brand"></a>
+      <nav class="site-nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="patient/submit.html" class="nav-link">Submit Claim</a>
+        <a href="patient/claims.html" class="nav-link">Claims History</a>
+        <a href="dashboard.html" class="nav-link">Member Guide</a>
+      </nav>
+      <div class="header-actions">
+        <a class="cta-register" href="register.html">Register</a>
+        <a class="cta-login" href="login.html">Log in</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="auth-page">
+    <div class="auth-card" role="form" aria-labelledby="loginTitle">
+      <img class="auth-logo" src="assets/img/cigna1.png" alt="Cigna logo">
+      <h1 id="loginTitle" class="auth-title">Log in to your Account</h1>
+      <p class="auth-sub">Welcome back, please enter your details.</p>
       <form id="loginForm" autocomplete="off" novalidate>
         <div class="form-group">
-          <label>Login Method</label>
+          <label class="tray-label">Login Method</label>
           <select id="loginMethod">
             <option value="email">Email</option>
             <option value="patient">Patient ID</option>
           </select>
         </div>
+        <div class="divider"><span class="divider-text">OR</span></div>
         <div class="form-group" id="emailGroup">
           <label for="email">Email</label>
           <input id="email" type="email" aria-required="true" />
@@ -31,15 +52,16 @@
           <label for="password">Password</label>
           <input id="password" type="password" required aria-required="true" minlength="8" />
         </div>
-        <div class="form-group">
-          <label for="remember"><input id="remember" type="checkbox" /> Remember me</label>
+        <div class="auth-actions">
+          <label for="remember" class="remember-label"><input id="remember" type="checkbox" /><span>Remember me</span></label>
+          <a class="forgot-link" href="#" aria-disabled="true">Forgot Password?</a>
         </div>
-        <button type="submit">Login</button>
-        <div id="loginMessage" style="margin-top:20px; font-weight:bold;"></div>
+        <button class="auth-submit" type="submit">Log in</button>
+        <div id="loginMessage" class="auth-message"></div>
       </form>
-      <p style="margin-top:16px;">New user? <a href="#" id="registerLink">Register</a></p>
+      <p class="auth-footer-text">Don’t have an account? <a href="register.html">Sign Up</a></p>
     </div>
-  </div>
+  </main>
   <script src="js/auth.js"></script>
   <script>
     const method = document.getElementById('loginMethod');
