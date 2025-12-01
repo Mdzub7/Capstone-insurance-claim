@@ -69,7 +69,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (window.logEvent) logEvent('admin_pending_loaded', { count: claims.length })
     function renderClaims(query=''){
       const q = query.toLowerCase();
-      const filtered = claims.filter(c=> (c.description||'').toLowerCase().includes(q) || (c.claim_id||'').toLowerCase().includes(q));
+      const filtered = claims
+        .filter(c=> (c.description||'').toLowerCase().includes(q) || (c.claim_id||'').toLowerCase().includes(q))
+        .sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
       let html = "<table style='width:100%'><thead><tr><th>ID</th><th>Description</th><th>Amount</th><th>Status</th><th>Document</th><th style='min-width:160px;'>Action</th></tr></thead><tbody>";
       if (!filtered.length) { html += "<tr><td colspan='6'>No pending claims</td></tr>"; }
       filtered.forEach(c => {
@@ -145,6 +147,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   if (adminStats || adminMonthly || adminStatus) {
     await refreshAdmin();
-    setInterval(refreshAdmin, 5000);
+    const REFRESH_MS = 60000;
+    setInterval(()=>{ if (document.visibilityState === 'visible') refreshAdmin(); }, REFRESH_MS);
   }
 });
