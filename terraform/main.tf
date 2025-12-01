@@ -139,6 +139,7 @@ data "archive_file" "lambda_zip" {
   output_path = "${path.module}/../lambda/processor.zip"
 }
 
+
 # --- LAMBDA FUNCTION ---
 resource "aws_lambda_function" "processor" {
   filename      = data.archive_file.lambda_zip.output_path

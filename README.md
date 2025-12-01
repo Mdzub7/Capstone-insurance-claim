@@ -1,23 +1,23 @@
 # Cloud-Native Insurance Claim Filing System
 
 ## Overview
-Modern claims portal with patient and admin experiences. Frontend is static (HTML/CSS/JS) and themed to match Cigna styling; backend is FastAPI with AWS integrations.
+Modern claims portal with patient and admin experiences. Frontend is static (HTML/CSS/JS) and themed to match Cigna styling; backend is FastAPI with AWS Services integrations DynamoDB, S3, Secrets manager, Lambda, etc.
 
 ## Quick Start
+- Frontend:
+  - `cd frontend`
+  - `python3 -m http.server 8080`
+  - Open `http://localhost:8080/index.html`
 - Backend:
   - `cd backend`
   - `python -m venv .venv && source .venv/bin/activate`
   - `pip install -r requirements.txt`
   - Configure AWS credentials and set Secrets Manager JWT secret per `backend/app/core/config.py`.
   - Run: `uvicorn app.main:app --reload --port 8001`
-- Frontend:
-  - `cd frontend`
-  - `python3 -m http.server 8080`
-  - Open `http://localhost:8080/index.html`
 
 ## Documentation
-- Frontend: `README.frontend.md` — layouts, pages, auth guards, charts.
-- Backend: `README.backend.md` — endpoints, data model, AWS setup.
+- Frontend: [README.frontend.md](./README.frontend.md) — layouts, pages, auth guards, charts.
+- Backend: [README.backend.md](./README.backend.md) — endpoints, data model, AWS setup.
 
 ## Pages and Flows
 - Home + Member Guide (demo access).
@@ -39,5 +39,5 @@ Modern claims portal with patient and admin experiences. Frontend is static (HTM
 - CORS configured for frontend origin.
 
 ## Notes
-- S3 uploads are temporarily disabled in UI; presigned URLs are still returned by backend.
+- Lambda, Bedrock.
 - For full admin analytics across all statuses, add an endpoint to list claims or query by status; current UI uses available endpoints (pending + users) and polls for real-time updates.
