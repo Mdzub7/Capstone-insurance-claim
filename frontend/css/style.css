@@ -292,6 +292,13 @@ button:hover { background-color: #0926fe; }
 .steps.status-REJECTED .step-dot.active, .steps.status-REJECTED .step-line.active { background:#e74c3c; }
 .steps.status-PENDING .step-dot.active, .steps.status-PENDING .step-line.active { background:#f1c40f; }
 
+/* Single-line progress bar for lifecycle */
+.progress { height: 8px; background: #c7d7e6; border-radius: 999px; overflow: hidden; }
+.progress-bar { height: 100%; width: 0; background: #0926fe; transition: width .3s ease; }
+.progress.status-PENDING .progress-bar { background:#f1c40f; }
+.progress.status-APPROVED .progress-bar { background:#27ae60; }
+.progress.status-REJECTED .progress-bar { background:#e74c3c; }
+
 @media (max-width: 1024px) {
   .patient-shell { grid-template-columns: 220px 1fr; }
   .stats-grid { grid-template-columns: repeat(2,1fr); }

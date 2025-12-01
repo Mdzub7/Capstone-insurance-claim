@@ -31,4 +31,5 @@ app.include_router(logs.router, prefix="/api/v1/logs", tags=["Logs"])
 
 @app.get("/")
 def health_check():
+    """Lightweight health endpoint for readiness/liveness probes."""
     return {"status": "healthy", "service": "insurance-backend"}

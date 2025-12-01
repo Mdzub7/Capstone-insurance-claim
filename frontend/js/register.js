@@ -1,5 +1,10 @@
 const API_BASE = "http://localhost:8001/api/v1";
 
+/**
+ * Compute crude password strength score.
+ * @param {string} p
+ * @returns {number}
+ */
 function passwordStrength(p) {
   let score = 0;
   if (p.length >= 8) score++;
@@ -10,6 +15,9 @@ function passwordStrength(p) {
   return score;
 }
 
+/**
+ * Register a new patient user.
+ */
 async function register(payload) {
   const res = await fetch(`${API_BASE}/auth/register`, {
     method: "POST",

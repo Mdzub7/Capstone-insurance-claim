@@ -9,6 +9,15 @@ from fastapi import UploadFile
 
 class ClaimService:
     def create_claim(self, claim_data: ClaimCreate, current_user: dict) -> ClaimResponse:
+        """Create a new claim item in DynamoDB and return response with presigned URL.
+
+        Args:
+            claim_data: validated claim payload
+            current_user: JWT-derived identity dict
+
+        Returns:
+            ClaimResponse including claim_id and optional s3_upload_url
+        """
         claim_id = str(uuid.uuid4())
         timestamp = datetime.datetime.utcnow().isoformat()
         
@@ -55,6 +64,7 @@ class ClaimService:
         )
 
     def get_claims_by_user(self, user_id: str):
+        """List claims for a user and attach presigned document URLs when available."""
         table = get_dynamodb_table()
         # Query the GSI (Global Secondary Index)
         response = table.query(
@@ -81,6 +91,7 @@ class ClaimService:
         return out
 
     def confirm_document_upload(self, claim_id: str) -> dict:
+        """Mark document as uploaded by setting S3 key and timestamp."""
         table = get_dynamodb_table()
         object_key = f"claims/{claim_id}/document.pdf"
         try:
@@ -95,6 +106,7 @@ class ClaimService:
             raise RuntimeError(str(e))
 
     def upload_document(self, claim_id: str, file: UploadFile, current_user: dict) -> dict:
+        """Upload document to S3 and update claim record; returns attributes with presigned URL."""
         table = get_dynamodb_table()
         s3 = get_s3_client()
         # Ownership check

@@ -1,5 +1,12 @@
 const API_BASE = "http://localhost:8001/api/v1";
 
+/**
+ * Persist auth token and role.
+ * @param {string} token
+ * @param {string} role
+ * @param {string} patientId
+ * @param {boolean} remember use localStorage if true
+ */
 function setAuth(token, role, patientId, remember) {
   const storage = remember ? localStorage : sessionStorage;
   storage.setItem("token", token);
@@ -7,10 +14,17 @@ function setAuth(token, role, patientId, remember) {
   if (patientId) storage.setItem("patient_id", patientId);
 }
 
+/**
+ * Get current JWT token.
+ * @returns {string|null}
+ */
 function getAuthToken() {
   return sessionStorage.getItem("token") || localStorage.getItem("token");
 }
 
+/**
+ * Clear stored auth state.
+ */
 function clearAuth() {
   sessionStorage.clear();
   localStorage.removeItem("token");
@@ -18,6 +32,9 @@ function clearAuth() {
   localStorage.removeItem("patient_id");
 }
 
+/**
+ * Authenticate and fetch JWT.
+ */
 async function login({ email, patient_id, password }) {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
@@ -35,6 +52,9 @@ async function login({ email, patient_id, password }) {
   return res.json();
 }
 
+/**
+ * Register a new user.
+ */
 async function register(payload) {
   const res = await fetch(`${API_BASE}/auth/register`, {
     method: "POST",

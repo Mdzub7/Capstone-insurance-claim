@@ -1,3 +1,6 @@
+/**
+ * Populate sidebar with current user profile and active link highlighting.
+ */
 async function populateSidebar() {
   try {
     const res = await fetch("http://localhost:8001/api/v1/users/me", { headers: authHeader() })
@@ -12,6 +15,9 @@ async function populateSidebar() {
   links.forEach(l => { if (l.getAttribute('href') && location.pathname.endsWith(l.getAttribute('href'))) l.classList.add('active') })
 }
 
+/**
+ * Build Authorization header from stored JWT.
+ */
 function authHeader() {
   const token = sessionStorage.getItem("token") || localStorage.getItem("token")
   return token ? { Authorization: `Bearer ${token}` } : {}

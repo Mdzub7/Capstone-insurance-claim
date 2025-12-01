@@ -1,22 +1,40 @@
 const API_BASE = "http://localhost:8001/api/v1";
 
+/**
+ * Build Authorization header from stored JWT.
+ * @returns {{Authorization?: string}}
+ */
 function authHeader() {
   const token = sessionStorage.getItem("token") || localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+/**
+ * Fetch current user profile.
+ * @returns {Promise<object>} profile
+ */
 async function fetchProfile() {
   const res = await fetch(`${API_BASE}/users/me`, { headers: authHeader() });
   if (!res.ok) throw new Error("Failed to load profile");
   return res.json();
 }
 
+/**
+ * Fetch claims for current user.
+ * @returns {Promise<Array>} claims
+ */
 async function fetchMyClaims() {
   const res = await fetch(`${API_BASE}/claims/my`, { headers: authHeader() });
   if (!res.ok) throw new Error("Failed to load claims");
   return res.json();
 }
 
+/**
+ * Submit a claim and optionally upload a document.
+ * @param {{amount:number, description:string, policy_number:string}} data
+ * @param {File} file PDF file
+ * @returns {Promise<object>} created claim info
+ */
 async function submitClaim(data, file) {
   const res = await fetch(`${API_BASE}/claims/`, {
     method: "POST",
@@ -117,6 +135,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (window.logEvent) logEvent('patient_submit_success', { claim_id: r.claim_id })
         uploadMsg.textContent = `Success. Claim ID: ${r.claim_id}`;
         uploadMsg.style.color = "green";
+        try { localStorage.setItem('claims:lastChange', Date.now().toString()); } catch {}
       } catch (err) {
         if (window.logEvent) logEvent('patient_submit_error', { message: err.message })
         uploadMsg.textContent = "Error: " + err.message;
@@ -125,6 +144,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  /**
+   * Load patient dashboard KPIs and charts.
+   */
   async function loadDashboard() {
     const claims = await fetchMyClaims();
     const years = Array.from(new Set(claims.map(c => new Date(c.created_at).getFullYear()))).sort();
@@ -166,6 +188,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  /**
+   * Load profile KPI widgets.
+   */
   async function loadProfileKPIs() {
     try {
       const claims = await fetchMyClaims();
@@ -180,6 +205,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     } catch {}
   }
 
+  /**
+   * Load claims history table and timeline chart with filters.
+   */
   async function loadHistory() {
     const claims = await fetchMyClaims();
     const years = Array.from(new Set(claims.map(c => new Date(c.created_at).getFullYear()))).sort();
@@ -218,23 +246,15 @@ window.addEventListener("DOMContentLoaded", async () => {
       const claims = (await fetchMyClaims()).slice().sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
       lifecycleList.innerHTML = claims.map(c=>{
         const status = c.claim_status;
-        const s1 = 'step-dot active';
-        const l1 = 'step-line active';
-        const s2 = status==='PENDING'||status==='APPROVED'||status==='REJECTED' ? 'step-dot active':'step-dot';
-        const l2 = status==='APPROVED'||status==='REJECTED' ? 'step-line active':'step-line';
-        const s3 = status==='APPROVED'||status==='REJECTED' ? 'step-dot active':'step-dot';
+        const percent = status==='PENDING' ? 33 : 100;
         return `
           <div class='card' style='margin-bottom:16px;'>
             <div style='display:flex; justify-content:space-between; align-items:center;'>
               <strong>${c.description}</strong>
               <span class='badge badge-${status}'>${status}</span>
             </div>
-            <div class='steps status-${status}' style='margin-top:12px;'>
-              <div class='${s1}' title='Submitted'></div>
-              <div class='${l1}'></div>
-              <div class='${s2}' title='In Review'></div>
-              <div class='${l2}'></div>
-              <div class='${s3}' title='Decision'></div>
+            <div class='progress status-${status}' style='margin-top:12px;'>
+              <div class='progress-bar' style='width:${percent}%'></div>
             </div>
             <div style='margin-top:8px; color:#6b7d8a;'>ID: ${c.claim_id} • ₹${Number(c.amount).toFixed(2)} • ${new Date(c.created_at).toLocaleDateString()} ${c.document_url?`• <a href='${c.document_url}' target='_blank'>View Document</a>`:''}</div>
           </div>`;

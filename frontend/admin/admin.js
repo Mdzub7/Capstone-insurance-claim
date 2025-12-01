@@ -1,34 +1,60 @@
 const API_BASE = "http://localhost:8001/api/v1";
 
+/**
+ * Build Authorization header from stored JWT.
+ * @returns {{Authorization?: string}}
+ */
 function authHeader() {
   const token = sessionStorage.getItem("token") || localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+/**
+ * Fetch all users (admin only).
+ * @returns {Promise<Array>} users list
+ */
 async function fetchUsers() {
   const res = await fetch(`${API_BASE}/admin/users`, { headers: authHeader() });
   if (!res.ok) throw new Error("Failed to load users");
   return res.json();
 }
 
+/**
+ * Fetch pending claims (admin only).
+ * @returns {Promise<Array>} pending claims
+ */
 async function fetchPendingClaims() {
   const res = await fetch(`${API_BASE}/admin/claims/pending`, { headers: authHeader() });
   if (!res.ok) return [];
   return res.json();
 }
 
+/**
+ * Fetch all claims (admin only).
+ * @returns {Promise<Array>} claims
+ */
 async function fetchAllClaims() {
   const res = await fetch(`${API_BASE}/admin/claims`, { headers: authHeader() });
   if (!res.ok) return [];
   return res.json();
 }
 
+/**
+ * Approve claim by id.
+ * @param {string} id claim_id
+ * @returns {Promise<object>} updated claim
+ */
 async function approveClaim(id) {
   const res = await fetch(`${API_BASE}/admin/claims/${id}/approve`, { method: "POST", headers: authHeader() });
   if (!res.ok) throw new Error("Approve failed");
   return res.json();
 }
 
+/**
+ * Reject claim by id.
+ * @param {string} id claim_id
+ * @returns {Promise<object>} updated claim
+ */
 async function rejectClaim(id) {
   const res = await fetch(`${API_BASE}/admin/claims/${id}/reject`, { method: "POST", headers: authHeader() });
   if (!res.ok) throw new Error("Reject failed");
@@ -120,7 +146,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch { adminProfile.textContent = 'Failed to load profile'; }
   }
 
-  // Admin stats & charts based on all claims with polling for real-time updates
+  /**
+   * Refresh analytics: stats, monthly chart, status distribution.
+   * Pulls all claims and re-renders dashboard widgets.
+   */
   async function refreshAdmin() {
     try {
       const allClaims = await fetchAllClaims();
@@ -147,7 +176,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   if (adminStats || adminMonthly || adminStatus) {
     await refreshAdmin();
-    const REFRESH_MS = 60000;
+    const REFRESH_MS = 300000;
     setInterval(()=>{ if (document.visibilityState === 'visible') refreshAdmin(); }, REFRESH_MS);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshAdmin();
+    });
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'claims:lastChange') refreshAdmin();
+    });
   }
 });
