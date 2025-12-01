@@ -1,6 +1,8 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware # <--- Import this
-from app.routers import claims
+from fastapi.middleware.cors import CORSMiddleware
+from app.routers import claims, auth, users, admin
+from app.core.logging import setup_logging
+from app.routers import logs
 
 app = FastAPI(
     title="Cloud-Native Insurance API",
@@ -17,9 +19,17 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+# Logging setup
+setup_logging()
+
 # Include the router
 app.include_router(claims.router, prefix="/api/v1/claims", tags=["Claims"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
+app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
+app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
+app.include_router(logs.router, prefix="/api/v1/logs", tags=["Logs"])
 
 @app.get("/")
 def health_check():
+    """Lightweight health endpoint for readiness/liveness probes."""
     return {"status": "healthy", "service": "insurance-backend"}

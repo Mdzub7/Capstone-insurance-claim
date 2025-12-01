@@ -45,9 +45,10 @@ crash.*.log
 *.tfvars
 *.tfvars.json
 
+.trae/
+
 LICENSE.txt
 
-terraform
 
 # Local overrides (should not be committed)
 override.tf
@@ -210,3 +211,12 @@ docker-compose.override.yml
 
 # IDE-specific local settings (safe defaults)
 *.code-workspace
+
+.mypy_cache/
+node_modules/
+tests/
+test-results/
+
+package-lock.json
+package.json
+playwright.config.ts

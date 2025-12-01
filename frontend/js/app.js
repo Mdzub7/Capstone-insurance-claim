@@ -1,6 +1,9 @@
 const API_URL = "http://localhost:8001/api/v1/claims"; // Ensure this matches your running Backend IP/Port
 
 // 1. Handle Form Submission
+/**
+ * Submit claim metadata and upload PDF to S3 via presigned URL.
+ */
 document.getElementById('claimForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const msgDiv = document.getElementById('message');
@@ -54,6 +57,9 @@ document.getElementById('claimForm').addEventListener('submit', async (e) => {
 });
 
 // 2. Load User History
+/**
+ * Load claims list for a given user.
+ */
 async function loadClaims() {
     const userId = document.getElementById('userId').value;
     const listDiv = document.getElementById('claimsList');
