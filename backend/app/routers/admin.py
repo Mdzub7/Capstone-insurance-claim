@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+import logging
 from typing import Optional
 from app.core.security import get_current_user, require_admin
 from app.services.admin_service import AdminService
@@ -16,6 +17,7 @@ def get_admin_service() -> AdminService:
 def list_users(current_user: dict = Depends(get_current_user), service: AdminService = Depends(get_admin_service)):
     """List all users (admin only)."""
     require_admin(current_user)
+    logging.info(f"admin_list_users user={current_user.get('sub')}")
     return service.list_users()
 
 
@@ -23,6 +25,7 @@ def list_users(current_user: dict = Depends(get_current_user), service: AdminSer
 def delete_user(user_id: str, current_user: dict = Depends(get_current_user), service: AdminService = Depends(get_admin_service)):
     """Delete a user (admin only)."""
     require_admin(current_user)
+    logging.info(f"admin_delete_user user={current_user.get('sub')} target={user_id}")
     service.delete_user(user_id)
     return
 
@@ -31,6 +34,7 @@ def delete_user(user_id: str, current_user: dict = Depends(get_current_user), se
 def list_pending(current_user: dict = Depends(get_current_user), service: AdminService = Depends(get_admin_service)):
     """List pending claims (admin only)."""
     require_admin(current_user)
+    logging.info(f"admin_list_pending user={current_user.get('sub')}")
     return service.list_pending_claims()
 
 
@@ -38,6 +42,7 @@ def list_pending(current_user: dict = Depends(get_current_user), service: AdminS
 def approve_claim(claim_id: str, current_user: dict = Depends(get_current_user), service: AdminService = Depends(get_admin_service)):
     """Approve a claim (admin only)."""
     require_admin(current_user)
+    logging.info(f"admin_approve user={current_user.get('sub')} claim_id={claim_id}")
     return service.update_claim_status(claim_id, "APPROVED")
 
 
@@ -45,6 +50,7 @@ def approve_claim(claim_id: str, current_user: dict = Depends(get_current_user),
 def reject_claim(claim_id: str, current_user: dict = Depends(get_current_user), service: AdminService = Depends(get_admin_service)):
     """Reject a claim (admin only)."""
     require_admin(current_user)
+    logging.info(f"admin_reject user={current_user.get('sub')} claim_id={claim_id}")
     return service.update_claim_status(claim_id, "REJECTED")
 
 
@@ -52,6 +58,7 @@ def reject_claim(claim_id: str, current_user: dict = Depends(get_current_user), 
 def list_claims(status: Optional[str] = None, current_user: dict = Depends(get_current_user), service: AdminService = Depends(get_admin_service)):
     """List all claims or filter by status (admin only)."""
     require_admin(current_user)
+    logging.info(f"admin_list_claims user={current_user.get('sub')} status={status}")
     return service.list_claims(status)
 
 
@@ -59,4 +66,5 @@ def list_claims(status: Optional[str] = None, current_user: dict = Depends(get_c
 def list_claims_by_patient(patient_id: str, current_user: dict = Depends(get_current_user), service: AdminService = Depends(get_admin_service)):
     """List all claims for a specific patient (admin only)."""
     require_admin(current_user)
+    logging.info(f"admin_list_by_patient user={current_user.get('sub')} patient_id={patient_id}")
     return service.list_claims_by_patient(patient_id)

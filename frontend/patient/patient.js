@@ -32,11 +32,13 @@ async function submitClaim(data, file) {
       body: file
     });
     if (!up.ok) throw new Error("Upload failed");
+    await fetch(`${API_BASE}/claims/${encodeURIComponent(result.claim_id)}/document/confirm`, { method: "POST", headers: authHeader() });
   }
   return result;
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
+  if (window.logEvent) logEvent('patient_page_load', { page: 'patient' })
   const profileCard = document.getElementById("profileCard");
   const claimsList = document.getElementById("claimsList");
   const submitForm = document.getElementById("submitForm");
@@ -103,6 +105,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (submitForm) {
     submitForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (window.logEvent) logEvent('patient_submit_attempt', {})
       uploadMsg.textContent = "Submitting...";
       uploadMsg.style.color = "#0070cd";
       const amount = parseFloat(document.getElementById("amount").value);
@@ -112,9 +115,11 @@ window.addEventListener("DOMContentLoaded", async () => {
       const file = fileEl.files[0];
       try {
         const r = await submitClaim({ amount, description, policy_number }, file);
+        if (window.logEvent) logEvent('patient_submit_success', { claim_id: r.claim_id })
         uploadMsg.textContent = `Success. Claim ID: ${r.claim_id}`;
         uploadMsg.style.color = "green";
       } catch (err) {
+        if (window.logEvent) logEvent('patient_submit_error', { message: err.message })
         uploadMsg.textContent = "Error: " + err.message;
         uploadMsg.style.color = "red";
       }

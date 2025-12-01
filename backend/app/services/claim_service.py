@@ -34,11 +34,10 @@ class ClaimService:
         try:
             upload_url = s3_client.generate_presigned_url(
                 'put_object',
-                Params={'Bucket': settings.S3_BUCKET, 'Key': object_key},
+                Params={'Bucket': settings.S3_BUCKET, 'Key': object_key, 'ContentType': 'application/pdf'},
                 ExpiresIn=3600
             )
         except ClientError as e:
-            print(f"Error generating presigned URL: {e}")
             upload_url = None
 
         # 4. Return the response object
@@ -50,7 +49,8 @@ class ClaimService:
             claim_id=claim_id,
             claim_status="PENDING",
             created_at=timestamp,
-            s3_upload_url=upload_url
+            s3_upload_url=upload_url,
+            document_url=None
         )
 
     def get_claims_by_user(self, user_id: str):
@@ -60,4 +60,35 @@ class ClaimService:
             IndexName="UserIndex",
             KeyConditionExpression=boto3.dynamodb.conditions.Key('user_id').eq(user_id)
         )
-        return response.get('Items', [])
+        items = response.get('Items', [])
+        s3_client = get_s3_client()
+        out = []
+        for it in items:
+            doc_key = it.get('document_key')
+            doc_url = None
+            if doc_key:
+                try:
+                    doc_url = s3_client.generate_presigned_url(
+                        'get_object',
+                        Params={'Bucket': settings.S3_BUCKET, 'Key': doc_key},
+                        ExpiresIn=900
+                    )
+                except ClientError:
+                    doc_url = None
+            it['document_url'] = doc_url
+            out.append(it)
+        return out
+
+    def confirm_document_upload(self, claim_id: str) -> dict:
+        table = get_dynamodb_table()
+        object_key = f"claims/{claim_id}/document.pdf"
+        try:
+            resp = table.update_item(
+                Key={"claim_id": claim_id},
+                UpdateExpression="SET document_key = :k, document_uploaded_at = :t",
+                ExpressionAttributeValues={":k": object_key, ":t": datetime.datetime.utcnow().isoformat()},
+                ReturnValues="ALL_NEW"
+            )
+            return resp.get('Attributes', {})
+        except ClientError as e:
+            raise RuntimeError(str(e))

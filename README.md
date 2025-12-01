@@ -1,7 +1,7 @@
 # Cloud-Native Insurance Claim Filing System
 
 ## Overview
-Modern claims portal with patient and admin experiences. Frontend is static (HTML/CSS/JS) and themed to match Cigna styling; backend is FastAPI with AWS Services integrations DynamoDB, S3, Secrets manager, Lambda, etc.
+Modern claims portal with patient and admin experiences. Frontend is static (HTML/CSS/JS) and themed to match Cigna styling; backend is FastAPI with AWS integrations (DynamoDB, S3, Secrets Manager).
 
 ## Quick Start
 - Frontend:
@@ -26,18 +26,45 @@ Modern claims portal with patient and admin experiences. Frontend is static (HTM
 
 ## Endpoints Used
 - Auth: `/api/v1/auth/login`, `/api/v1/auth/register`, `/api/v1/users/me`
-- Claims: `/api/v1/claims/` (POST), `/api/v1/claims/my` (GET)
-- Admin: `/api/v1/admin/users`, `/api/v1/admin/claims/pending`, approve/reject under `/api/v1/admin/claims/{id}/...`
+- Claims: `/api/v1/claims/` (POST), `/api/v1/claims/my` (GET), `/api/v1/claims/{id}/document/confirm` (POST)
+- Admin: `/api/v1/admin/users`, `/api/v1/admin/claims/pending`, `/api/v1/admin/claims` (status filter), approve/reject under `/api/v1/admin/claims/{id}/...`
 
 ## Testing
 - Backend tests in `backend/tests/` — run `pytest` or `python run_tests.py`.
 - Optional UI checks with Playwright from `frontend`: `npx playwright test`.
 
 ## Deployment Checklist
-- Terraform: SQS, DynamoDB, Lambda, IAM; enable S3 bucket and notifications if uploads are needed.
-- Secrets Manager configured and IAM access granted.
-- CORS configured for frontend origin.
+- Ensure S3 bucket exists and write permissions granted.
+- DynamoDB table created with a primary key `claim_id`.
+- Secrets Manager configured with JWT secret and API has access.
+- CORS origin configured for deployed frontend.
+- Containerize: NGINX for frontend, uvicorn for backend; set `BACKEND_BASE` in frontend container.
+- Monitoring: ship stdout logs to your log aggregator; review client logs in DynamoDB.
 
 ## Notes
-- Lambda, Bedrock.
-- For full admin analytics across all statuses, add an endpoint to list claims or query by status; current UI uses available endpoints (pending + users) and polls for real-time updates.
+- Optional AWS services like Lambda/Bedrock can be integrated later.
+- Admin analytics uses `/api/v1/admin/claims` for full status coverage and polls for updates.
+
+## Architecture
+- Frontend (`frontend/`): static HTML/CSS/JS, Chart.js for analytics, NGINX Dockerfile provided.
+- Backend (`backend/`): FastAPI, uvicorn; routers under `app/routers/*`, services under `app/services/*`.
+- Data: DynamoDB single-table, items keyed by `claim_id` including `USER#{user_id}` entries.
+- Storage: S3 bucket at `settings.S3_BUCKET` for claim documents.
+- Security: JWT with secret loaded from AWS Secrets Manager; CORS open in dev.
+
+## Configuration
+- `backend/app/core/config.py` holds:
+  - `AWS_REGION`, `DYNAMODB_TABLE`, `S3_BUCKET`, `JWT_SECRET_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
+- AWS credentials must permit DynamoDB and S3 in `AWS_REGION`.
+
+## Claim Document Flow
+- User submits claim via `POST /api/v1/claims/` and receives `s3_upload_url`.
+- Frontend uploads the PDF directly to S3 using the presigned URL.
+- Frontend confirms upload via `POST /api/v1/claims/{claim_id}/document/confirm`.
+- Backend stores `document_key` and exposes short-lived `document_url` on claim listings.
+- Admin views documents via `document_url` in Pending Claims and Search.
+
+## Logging
+- Server logs: Structured INFO logs to stdout via `app.core.logging.setup_logging()`.
+- Client logs: Frontend posts events to `/api/v1/logs`; stored in DynamoDB items `LOG#<uuid>` with `level`, `event`, `context`, `user_id`.
+- Key events logged: claim submissions, approvals/rejections, analytics refreshes, patient submit attempts.

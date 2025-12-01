@@ -20,6 +20,7 @@ class ClaimResponse(ClaimBase):
     created_at: str
     s3_upload_url: Optional[str] = None # Presigned URL
     user_id: str
+    document_url: Optional[str] = None
 
     class Config:
         from_attributes = True
