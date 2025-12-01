@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 import logging
 from typing import List
 from app.schemas.claim import ClaimCreate, ClaimResponse
@@ -46,5 +46,18 @@ def confirm_document(
         logging.info(f"confirm_document user={current_user.get('sub')} claim_id={claim_id}")
         attrs = service.confirm_document_upload(claim_id)
         return attrs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{claim_id}/document")
+def upload_document(
+    claim_id: str,
+    file: UploadFile = File(...),
+    service: ClaimService = Depends(get_claim_service),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        logging.info(f"upload_document user={current_user.get('sub')} claim_id={claim_id} filename={file.filename}")
+        return service.upload_document(claim_id, file, current_user)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

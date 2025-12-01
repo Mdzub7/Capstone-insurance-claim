@@ -5,6 +5,7 @@ from botocore.exceptions import ClientError
 from app.core.database import get_dynamodb_table, get_s3_client
 from app.core.config import settings
 from app.schemas.claim import ClaimCreate, ClaimResponse
+from fastapi import UploadFile
 
 class ClaimService:
     def create_claim(self, claim_data: ClaimCreate, current_user: dict) -> ClaimResponse:
@@ -60,7 +61,7 @@ class ClaimService:
             IndexName="UserIndex",
             KeyConditionExpression=boto3.dynamodb.conditions.Key('user_id').eq(user_id)
         )
-        items = response.get('Items', [])
+        items = [x for x in response.get('Items', []) if not str(x.get('claim_id','')).startswith('LOG#')]
         s3_client = get_s3_client()
         out = []
         for it in items:
@@ -90,5 +91,31 @@ class ClaimService:
                 ReturnValues="ALL_NEW"
             )
             return resp.get('Attributes', {})
+        except ClientError as e:
+            raise RuntimeError(str(e))
+
+    def upload_document(self, claim_id: str, file: UploadFile, current_user: dict) -> dict:
+        table = get_dynamodb_table()
+        s3 = get_s3_client()
+        # Ownership check
+        item = table.get_item(Key={"claim_id": claim_id}).get('Item')
+        if not item or item.get('user_id') != current_user.get('sub'):
+            raise RuntimeError('Forbidden')
+        key = f"claims/{claim_id}/document.pdf"
+        try:
+            s3.upload_fileobj(file.file, settings.S3_BUCKET, key, ExtraArgs={"ContentType": file.content_type or "application/pdf"})
+        except ClientError as e:
+            raise RuntimeError(str(e))
+        try:
+            resp = table.update_item(
+                Key={"claim_id": claim_id},
+                UpdateExpression="SET document_key = :k, document_uploaded_at = :t",
+                ExpressionAttributeValues={":k": key, ":t": datetime.datetime.utcnow().isoformat()},
+                ReturnValues="ALL_NEW"
+            )
+            attrs = resp.get('Attributes', {})
+            url = s3.generate_presigned_url('get_object', Params={'Bucket': settings.S3_BUCKET, 'Key': key}, ExpiresIn=900)
+            attrs['document_url'] = url
+            return attrs
         except ClientError as e:
             raise RuntimeError(str(e))

@@ -25,14 +25,11 @@ async function submitClaim(data, file) {
   });
   if (!res.ok) throw new Error("Failed to create claim");
   const result = await res.json();
-  if (file && result.s3_upload_url) {
-    const up = await fetch(result.s3_upload_url, {
-      method: "PUT",
-      headers: { "Content-Type": "application/pdf" },
-      body: file
-    });
-    if (!up.ok) throw new Error("Upload failed");
-    await fetch(`${API_BASE}/claims/${encodeURIComponent(result.claim_id)}/document/confirm`, { method: "POST", headers: authHeader() });
+  if (file) {
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    const up = await fetch(`${API_BASE}/claims/${encodeURIComponent(result.claim_id)}/document`, { method: 'POST', headers: authHeader(), body: fd });
+    if (!up.ok) throw new Error('Upload failed');
   }
   return result;
 }
