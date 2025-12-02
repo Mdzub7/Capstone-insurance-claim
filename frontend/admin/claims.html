@@ -36,7 +36,7 @@
         <h2>Search by Patient ID</h2>
         <div class="filters">
           <input id="searchPatientId" type="text" placeholder="PATIENT#..." />
-          <button class="auth-submit" id="searchBtn" style="width:auto;">Search</button>
+          <button class="auth-submit" id="searchBtn" type="button" style="width:auto;">Search</button>
         </div>
         <div class="table-card">
           <table>
@@ -59,7 +59,8 @@
         const headers = token ? { Authorization: `Bearer ${token}` } : {}
         const res = await fetch(`${API_BASE}/admin/claims/by-patient/${encodeURIComponent(patientId)}`, { headers })
         if (!res.ok) { document.getElementById('searchTable').innerHTML = '<tr><td colspan="6">Failed to load claims</td></tr>'; return }
-        const claims = await res.json()
+        const claims = (await res.json()).slice().sort((a,b)=> new Date(b.created_at) - new Date(a.created_at))
+        if (window.logEvent) logEvent('admin_claims_search_result', { patientId, count: claims.length })
         document.getElementById('searchTable').innerHTML = (claims.length?claims.map(c=>`
           <tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description||''}</td><td>₹${Number(c.amount||0).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td><td>${c.document_url?`<a href='${c.document_url}' target='_blank'>View</a>`:'-'}</td></tr>
         `).join(''):`<tr><td colspan="6">No claims found for ${patientId}</td></tr>`)
@@ -72,6 +73,7 @@
     })
     document.getElementById('searchPatientId').addEventListener('keydown', (e)=>{
       if (e.key==='Enter') {
+        e.preventDefault();
         const patientId = e.target.value.trim(); if (patientId) renderClaimsByPatient(patientId)
       }
     })

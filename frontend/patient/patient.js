@@ -100,6 +100,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
         html += "</ul>";
         claimsList.innerHTML = html;
+        if (window.logEvent) logEvent('patient_claims_list_loaded', { count: sorted.length })
       }
     } catch (e) {
       claimsList.textContent = "Failed to load claims";
@@ -185,6 +186,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (recentTable) {
       const r = claims.slice().sort((a,b)=> new Date(b.created_at)-new Date(a.created_at)).slice(0,10);
       recentTable.innerHTML = r.map(c=>`<tr><td>${c.claim_id}</td><td>${new Date(c.created_at).toLocaleDateString()}</td><td>${c.description}</td><td>₹${Number(c.amount).toFixed(2)}</td><td><span class='badge badge-${c.claim_status}'>${c.claim_status}</span></td><td>${c.document_url?`<a href='${c.document_url}' target='_blank'>View</a>`:'-'}</td></tr>`).join('');
+      if (window.logEvent) logEvent('patient_recent_loaded', { count: r.length })
     }
   }
 
@@ -227,6 +229,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         filtered.forEach(c=>{ const d=new Date(c.created_at); byMonth[d.getMonth()]++; });
         new Chart(ctx, { type:'line', data:{ labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets:[{ label:'Claims', data:byMonth, borderColor:'#0926fe' }] }, options:{ responsive:true } });
       }
+      if (window.logEvent) logEvent('patient_history_render', { count: filtered.length })
     }
     if (statusFilter) statusFilter.addEventListener('change', render);
     if (yearFilter) yearFilter.addEventListener('change', render);

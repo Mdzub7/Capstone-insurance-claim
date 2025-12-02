@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     renderClaims('');
     const csearch = document.getElementById('claimsSearch');
-    if (csearch) csearch.addEventListener('input', e=> renderClaims(e.target.value));
+    if (csearch) csearch.addEventListener('input', e=> { if (window.logEvent) logEvent('admin_pending_filter', { query: e.target.value }); renderClaims(e.target.value) });
     claimsDiv.addEventListener("click", async (e) => {
       const t = e.target;
       if (t.classList.contains("delete-user")) {
@@ -176,13 +176,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   if (adminStats || adminMonthly || adminStatus) {
     await refreshAdmin();
-    const REFRESH_MS = 300000;
-    setInterval(()=>{ if (document.visibilityState === 'visible') refreshAdmin(); }, REFRESH_MS);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') refreshAdmin();
-    });
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'claims:lastChange') refreshAdmin();
-    });
   }
 });
