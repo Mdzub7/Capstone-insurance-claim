@@ -61,8 +61,7 @@ async function rejectClaim(id) {
   return res.json();
 }
 
-async function __initAdmin() {
-  if (window.__adminRefreshInit) return; window.__adminRefreshInit = true;
+document.addEventListener("DOMContentLoaded", async () => {
   if (window.logEvent) logEvent('admin_page_load', {})
   const usersDiv = document.getElementById("usersDiv");
   const claimsDiv = document.getElementById("claimsDiv");
@@ -151,8 +150,6 @@ async function __initAdmin() {
    * Refresh analytics: stats, monthly chart, status distribution.
    * Pulls all claims and re-renders dashboard widgets.
    */
-  let monthlyChart = null;
-  let statusChart = null;
   async function refreshAdmin() {
     try {
       const allClaims = await fetchAllClaims();
@@ -170,27 +167,17 @@ async function __initAdmin() {
       if (adminMonthly && window.Chart) {
         const byMonth = Array(12).fill(0); const amtByMonth = Array(12).fill(0);
         allClaims.forEach(c=>{ const d=new Date(c.created_at); if (!isNaN(d)) { byMonth[d.getMonth()]++; amtByMonth[d.getMonth()]+=Number(c.amount||0); } });
-        if (!monthlyChart) {
-          monthlyChart = new Chart(adminMonthly, { type:'bar', data:{ labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets:[{ label:'Claims', data:byMonth, backgroundColor:'#0926fe', borderRadius:6 }, { label:'Amount (₹)', data:amtByMonth, type:'line', borderColor:'#27ae60', yAxisID:'y1' }] }, options:{ responsive:true, scales:{ y:{ beginAtZero:true }, y1:{ beginAtZero:true, position:'right' } } } });
-        } else {
-          monthlyChart.data.datasets[0].data = byMonth;
-          monthlyChart.data.datasets[1].data = amtByMonth;
-          monthlyChart.update();
-        }
+        new Chart(adminMonthly, { type:'bar', data:{ labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets:[{ label:'Claims', data:byMonth, backgroundColor:'#0926fe', borderRadius:6 }, { label:'Amount (₹)', data:amtByMonth, type:'line', borderColor:'#27ae60', yAxisID:'y1' }] }, options:{ responsive:true, scales:{ y:{ beginAtZero:true }, y1:{ beginAtZero:true, position:'right' } } } });
       }
       if (adminStatus && window.Chart) {
-        const data = [pending, approved, rejected];
-        if (!statusChart) {
-          statusChart = new Chart(adminStatus, { type:'doughnut', data:{ labels:['Pending','Approved','Rejected'], datasets:[{ data, backgroundColor:['#f1c40f','#27ae60','#e74c3c'] }] } });
-        } else {
-          statusChart.data.datasets[0].data = data;
-          statusChart.update();
-        }
+        new Chart(adminStatus, { type:'doughnut', data:{ labels:['Pending','Approved','Rejected'], datasets:[{ data:[pending, approved, rejected], backgroundColor:['#f1c40f','#27ae60','#e74c3c'] }] } });
       }
     } catch {}
   }
   if (adminStats || adminMonthly || adminStatus) {
     await refreshAdmin();
+    const REFRESH_MS = 300000;
+    setInterval(()=>{ if (document.visibilityState === 'visible') refreshAdmin(); }, REFRESH_MS);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') refreshAdmin();
     });
@@ -198,10 +185,4 @@ async function __initAdmin() {
       if (e.key === 'claims:lastChange') refreshAdmin();
     });
   }
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', __initAdmin);
-} else {
-  __initAdmin();
-}
+});

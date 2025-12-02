@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8001/api/v1/claims";
+const API_URL = "http://localhost:8001/api/v1/claims"; // Ensure this matches your running Backend IP/Port
 
 // 1. Handle Form Submission
 /**

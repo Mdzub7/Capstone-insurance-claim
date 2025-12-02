@@ -36,7 +36,7 @@
         <h2>Search by Patient ID</h2>
         <div class="filters">
           <input id="searchPatientId" type="text" placeholder="PATIENT#..." />
-          <button type="button" class="auth-submit" id="searchBtn" style="width:auto;">Search</button>
+          <button class="auth-submit" id="searchBtn" style="width:auto;">Search</button>
         </div>
         <div class="table-card">
           <table>
@@ -47,7 +47,6 @@
       </div>
     </main>
   </div>
-  
   <script src="../js/logger.js"></script>
   <script src="admin.js"></script>
   <script src="../patient/sidebar.js"></script>
@@ -66,15 +65,13 @@
         `).join(''):`<tr><td colspan="6">No claims found for ${patientId}</td></tr>`)
       })()
     }
-    document.getElementById('searchBtn').addEventListener('click', (e)=>{
-      e.preventDefault();
+    document.getElementById('searchBtn').addEventListener('click', ()=>{
       const patientId = document.getElementById('searchPatientId').value.trim()
       if (!patientId) return
       renderClaimsByPatient(patientId)
     })
     document.getElementById('searchPatientId').addEventListener('keydown', (e)=>{
       if (e.key==='Enter') {
-        e.preventDefault();
         const patientId = e.target.value.trim(); if (patientId) renderClaimsByPatient(patientId)
       }
     })

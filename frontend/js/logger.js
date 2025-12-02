@@ -1,5 +1,4 @@
-const API_BASE = "http://localhost:8001/api/v1";
-const LOG_API = `${API_BASE}/logs`;
+const LOG_API = "http://localhost:8001/api/v1/logs";
 /**
  * Send a log event to backend.
  * @param {string} event

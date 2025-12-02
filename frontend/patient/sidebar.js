@@ -1,10 +1,9 @@
 /**
  * Populate sidebar with current user profile and active link highlighting.
  */
-const API_BASE = 'http://localhost:8001/api/v1';
 async function populateSidebar() {
   try {
-    const res = await fetch(`${API_BASE}/users/me`, { headers: authHeader() })
+    const res = await fetch("http://localhost:8001/api/v1/users/me", { headers: authHeader() })
     if (!res.ok) return
     const u = await res.json()
     const nameEl = document.getElementById('sbName')
