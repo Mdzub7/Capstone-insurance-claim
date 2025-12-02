@@ -1,4 +1,4 @@
-const API_BASE = (typeof getApiBase === 'function' ? getApiBase() : ((window.__CONFIG && window.__CONFIG.API_BASE) || "http://localhost:8001/api/v1"));
+const API_BASE = "http://localhost:8001/api/v1";
 const LOG_API = `${API_BASE}/logs`;
 /**
  * Send a log event to backend.

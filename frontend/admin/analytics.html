@@ -58,7 +58,7 @@
     </main>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="../js/config.js"></script>
+  
   <script src="../js/logger.js"></script>
   <script src="admin.js"></script>
   <script src="../patient/sidebar.js"></script>
@@ -66,7 +66,7 @@
     (async function(){
       const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const API_BASE = (typeof getApiBase === 'function' ? getApiBase() : ((window.__CONFIG && window.__CONFIG.API_BASE) || 'http://localhost:8001/api/v1'));
+      const API_BASE = 'http://localhost:8001/api/v1';
       const usersRes = await fetch(`${API_BASE}/admin/users`, { headers });
       const users = usersRes.ok ? await usersRes.json() : [];
       const userSelect = document.getElementById('userSelect');

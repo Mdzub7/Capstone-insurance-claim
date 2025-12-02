@@ -1,4 +1,4 @@
-const API_BASE = (typeof getApiBase === 'function' ? getApiBase() : ((window.__CONFIG && window.__CONFIG.API_BASE) || "http://localhost:8001/api/v1"));
+const API_BASE = "http://localhost:8001/api/v1";
 
 /**
  * Persist auth token and role.
