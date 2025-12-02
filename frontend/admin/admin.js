@@ -62,6 +62,8 @@ async function rejectClaim(id) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  if (window.__adminInitDone) return;
+  window.__adminInitDone = true;
   if (window.logEvent) logEvent('admin_page_load', {})
   const usersDiv = document.getElementById("usersDiv");
   const claimsDiv = document.getElementById("claimsDiv");
