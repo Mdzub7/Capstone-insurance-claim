@@ -61,7 +61,7 @@ async function rejectClaim(id) {
   return res.json();
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+async function __initAdmin() {
   if (window.__adminRefreshInit) return; window.__adminRefreshInit = true;
   if (window.logEvent) logEvent('admin_page_load', {})
   const usersDiv = document.getElementById("usersDiv");
@@ -198,4 +198,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (e.key === 'claims:lastChange') refreshAdmin();
     });
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', __initAdmin);
+} else {
+  __initAdmin();
+}
