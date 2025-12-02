@@ -36,7 +36,7 @@
         <h2>Search by Patient ID</h2>
         <div class="filters">
           <input id="searchPatientId" type="text" placeholder="PATIENT#..." />
-          <button class="auth-submit" id="searchBtn" style="width:auto;">Search</button>
+          <button type="button" class="auth-submit" id="searchBtn" style="width:auto;">Search</button>
         </div>
         <div class="table-card">
           <table>
@@ -47,6 +47,7 @@
       </div>
     </main>
   </div>
+  <script src="../js/config.js"></script>
   <script src="../js/logger.js"></script>
   <script src="admin.js"></script>
   <script src="../patient/sidebar.js"></script>
@@ -54,7 +55,7 @@
     function renderClaimsByPatient(patientId) {
       (async ()=>{
         logEvent('admin_claims_search', { patientId })
-        const API_BASE = 'http://localhost:8001/api/v1'
+        const API_BASE = (typeof getApiBase === 'function' ? getApiBase() : ((window.__CONFIG && window.__CONFIG.API_BASE) || 'http://localhost:8001/api/v1'))
         const token = sessionStorage.getItem('token') || localStorage.getItem('token')
         const headers = token ? { Authorization: `Bearer ${token}` } : {}
         const res = await fetch(`${API_BASE}/admin/claims/by-patient/${encodeURIComponent(patientId)}`, { headers })
@@ -65,13 +66,15 @@
         `).join(''):`<tr><td colspan="6">No claims found for ${patientId}</td></tr>`)
       })()
     }
-    document.getElementById('searchBtn').addEventListener('click', ()=>{
+    document.getElementById('searchBtn').addEventListener('click', (e)=>{
+      e.preventDefault();
       const patientId = document.getElementById('searchPatientId').value.trim()
       if (!patientId) return
       renderClaimsByPatient(patientId)
     })
     document.getElementById('searchPatientId').addEventListener('keydown', (e)=>{
       if (e.key==='Enter') {
+        e.preventDefault();
         const patientId = e.target.value.trim(); if (patientId) renderClaimsByPatient(patientId)
       }
     })
